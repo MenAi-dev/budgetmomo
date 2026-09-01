@@ -854,7 +854,7 @@ function renderHistoriqueBudgets(){
     return;
   }
   zone.innerHTML = historiqueBudgets.map((h,i)=>{
-    const label = new Date(h.mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+    const label = new Date(h.mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'short', year:'numeric'});
     const badge = h.methode==='auto' ? 'figé auto' : 'validé manuellement';
     const depMoisListe = depenses.filter(d=>d.date && d.date.startsWith(h.mois));
     const totalDepMois = depMoisListe.reduce((s,d)=>s+d.montant,0);
