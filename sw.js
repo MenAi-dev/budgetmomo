@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mon-budget-cache-v6';
+const CACHE_NAME = 'mon-budget-cache-v7';
 const URLS_A_METTRE_EN_CACHE = [
   './',
   './index.html',
