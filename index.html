@@ -124,6 +124,22 @@
     *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
   }
 
+  .solde-card{
+    border:1px solid var(--ligne); border-radius:var(--rayon); background:var(--noir-2);
+    padding:24px 28px; margin-bottom:20px;
+    animation: apparition .5s ease both;
+  }
+  .solde-card .haut{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;}
+  .solde-card .label{color:var(--gris); font-size:0.82rem;}
+  .solde-card .sous-label{color:var(--gris); font-size:0.76rem; margin-top:2px;}
+  .solde-card .valeur{font-size:2.3rem; font-weight:800; margin-top:6px; letter-spacing:-0.02em; display:inline-block;}
+  .solde-card .valeur small{font-size:1.05rem; color:var(--gris); font-weight:500; margin-left:4px;}
+  .solde-detail{
+    display:flex; gap:22px; margin-top:16px; padding-top:14px; border-top:1px solid var(--ligne);
+    font-size:0.82rem; color:var(--gris); flex-wrap:wrap;
+  }
+  .solde-detail b{color:var(--blanc); font-weight:600;}
+
   .hero{
     display:grid; grid-template-columns: 1fr 1fr;
     border:1px solid var(--ligne); border-radius:var(--rayon);
@@ -417,6 +433,20 @@
   </nav>
 
   <div class="panel actif" data-panel="apercu">
+  <div class="solde-card">
+    <div class="haut">
+      <div>
+        <div class="label">Argent en poche</div>
+        <div class="sous-label">Ce que tu as réellement, au-delà du budget</div>
+      </div>
+    </div>
+    <div class="valeur" id="soldeDispo">0 <small>FCFA</small></div>
+    <div class="solde-detail">
+      <span>Entrées : <b id="soldeEntrees">0 FCFA</b></span>
+      <span>Dépenses : <b id="soldeDepenses">0 FCFA</b></span>
+    </div>
+  </div>
+
   <div class="hero">
     <div class="col-gauche">
       <div class="stat">
@@ -649,6 +679,7 @@ let categoriePourBudget = null;
 let prevDepenseTotal = 0;
 let prevRestantTotal = totalBudget();
 let prevEntreesTotal = 0;
+let prevSoldeTotal = 0;
 
 function animerValeur(el, debut, fin, versTexte){
   const duree = 550;
@@ -728,6 +759,15 @@ function rendre(){
   const budgetActuel = totalBudget();
   const totalDepense = depenses.reduce((s,d)=>s+d.montant,0);
   const totalRestant = budgetActuel - totalDepense;
+  const totalEntreesGlobal = entrees.reduce((s,e)=>s+e.montant,0);
+  const solde = totalEntreesGlobal - totalDepense;
+
+  const soldeEl = document.getElementById('soldeDispo');
+  animerValeur(soldeEl, prevSoldeTotal, solde, v => fmt(v)+' <small>FCFA</small>');
+  soldeEl.className = 'valeur ' + (solde >= 0 ? 'pos' : 'neg');
+  prevSoldeTotal = solde;
+  document.getElementById('soldeEntrees').textContent = fmt(totalEntreesGlobal)+' FCFA';
+  document.getElementById('soldeDepenses').textContent = fmt(totalDepense)+' FCFA';
 
   const totalDepenseEl = document.getElementById('totalDepense');
   const totalRestantEl = document.getElementById('totalRestant');
