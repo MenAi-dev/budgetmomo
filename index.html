@@ -269,11 +269,17 @@
   }
   .graphique-mois-head{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;}
   .graphique-mois h2{font-size:1.1rem; font-weight:700; margin:0;}
+  .mois-select-wrap{position:relative; display:inline-flex;}
   .mois-input{
     background:var(--noir); border:1px solid var(--ligne); color:var(--blanc);
     padding:8px 12px; border-radius:8px; font-size:0.85rem; font-family:inherit;
+    white-space:nowrap; text-transform:capitalize; cursor:pointer;
   }
-  .mois-input:focus{outline:none; border-color:var(--bleu);}
+  .mois-select-wrap:focus-within .mois-input{border-color:var(--bleu);}
+  .mois-input-natif{
+    position:absolute; top:0; left:0; right:0; bottom:0; width:100%; height:100%; margin:0; padding:0;
+    border:0; background:transparent; opacity:0; cursor:pointer; color-scheme:dark; -webkit-appearance:none; appearance:none; z-index:2;
+  }
   .mois-stats{display:flex; gap:28px; margin:20px 0 8px; flex-wrap:wrap;}
   .mois-stats .item .label{color:var(--gris); font-size:0.78rem;}
   .mois-stats .item .valeur{font-size:1.2rem; font-weight:700; margin-top:2px;}
@@ -548,7 +554,10 @@
   <div class="graphique-mois">
     <div class="graphique-mois-head">
       <h2>Vue mensuelle</h2>
-      <input type="month" class="mois-input" id="moisSelect">
+      <div class="mois-select-wrap">
+        <span class="mois-input" id="moisSelectLabel">—</span>
+        <input type="month" class="mois-input-natif" id="moisSelect" aria-label="Choisir le mois">
+      </div>
     </div>
     <div class="mois-stats">
       <div class="item">
@@ -849,12 +858,11 @@ function renderHistoriqueBudgets(){
   const zone = document.getElementById('histoBudgetsBody');
   if(!zone) return;
   if(historiqueBudgets.length===0){
-    zone.innerHTML = '<div class="vide">Aucun budget défini. Il sera fixé automatiquement au début du mois, ou tu peux le définir ci-dessous.</div>';
-
+    zone.innerHTML = '<div class="vide">Aucun budget figé pour l\'instant. Il se figera automatiquement au changement de mois, ou tu peux le faire manuellement ci-dessous.</div>';
     return;
   }
   zone.innerHTML = historiqueBudgets.map((h,i)=>{
-    const label = new Date(h.mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'short', year:'numeric'});
+    const label = new Date(h.mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
     const badge = h.methode==='auto' ? 'figé auto' : 'validé manuellement';
     const depMoisListe = depenses.filter(d=>d.date && d.date.startsWith(h.mois));
     const totalDepMois = depMoisListe.reduce((s,d)=>s+d.montant,0);
@@ -1063,6 +1071,11 @@ function renderGraphiqueMois(){
   const moisEl = document.getElementById('moisSelect');
   if(!moisEl.value) moisEl.value = moisActuel();
   const mois = moisEl.value;
+  const label = document.getElementById('moisSelectLabel');
+  if(label){
+    const court = new Date(mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'short', year:'numeric'});
+    label.textContent = court.replace('.', '');
+  }
   const depMois = depenses.filter(d=>d.date && d.date.startsWith(mois));
   const entMois = entrees.filter(e=>e.date && e.date.startsWith(mois));
   const totalDepMois = depMois.reduce((s,d)=>s+d.montant,0);
@@ -1360,6 +1373,11 @@ document.getElementById('overlayGlobal').addEventListener('click', e=>{ if(e.tar
 document.getElementById('inputGlobalMontant').addEventListener('keydown', e=>{ if(e.key==='Enter') validerGlobal(); });
 
 document.getElementById('moisSelect').addEventListener('change', renderGraphiqueMois);
+document.getElementById('moisSelect').addEventListener('click', function(){
+  if(typeof this.showPicker === 'function'){
+    try{ this.showPicker(); }catch(e){}
+  }
+});
 document.getElementById('btnFigerBudget').addEventListener('click', validerFigerBudget);
 
 document.getElementById('btnReset').addEventListener('click', async ()=>{
@@ -1371,6 +1389,7 @@ document.getElementById('btnReset').addEventListener('click', async ()=>{
 });
 
 document.getElementById('moisSelect').value = moisActuel();
+renderGraphiqueMois();
 
 function basculerPanneau(nom){
   document.querySelectorAll('.nav-btn').forEach(b=>{
