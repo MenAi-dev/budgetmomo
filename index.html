@@ -336,7 +336,25 @@
     background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:980px; margin-left:8px;
     text-transform:none;
   }
-  .histo-budget-detail{color:var(--gris); font-size:0.78rem; margin-top:4px; line-height:1.5;}
+  .histo-budget-detail{
+    margin-top:10px; border:1px solid var(--ligne); border-radius:12px;
+    padding:4px 12px; background:rgba(255,255,255,0.03);
+  }
+  .histo-detail-ligne{
+    display:flex; align-items:center; gap:9px; padding:8px 0;
+    border-bottom:1px solid var(--ligne); font-size:0.78rem;
+  }
+  .histo-detail-ligne:last-child{border-bottom:none;}
+  .histo-detail-ligne .dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+  .histo-detail-ligne .nom{
+    color:var(--blanc); font-weight:500; flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .histo-detail-ligne .valeurs{
+    color:var(--gris); white-space:nowrap; font-size:0.76rem; text-align:right;
+  }
+  .histo-detail-ligne .valeurs b{color:var(--blanc); font-weight:600;}
+  .histo-detail-ligne .valeurs.depasse b{color:var(--rouge);}
   .lien-discret{
     background:none; border:none; color:var(--gris); font-size:0.72rem;
     padding:4px 0; cursor:pointer; opacity:0.55; transition:opacity .15s ease;
@@ -843,8 +861,14 @@ function renderHistoriqueBudgets(){
     const depasse = totalDepMois > h.total;
     const detail = h.categories.map(c=>{
       const depCat = depMoisListe.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0);
-      return c.nom+' : '+fmt(depCat)+' / '+fmt(c.budget)+' FCFA dépensé';
-    }).join(' · ');
+      const depasseCat = depCat > c.budget;
+      return `
+      <div class="histo-detail-ligne">
+        <span class="dot" style="background:${c.couleur}"></span>
+        <span class="nom">${c.nom}</span>
+        <span class="valeurs ${depasseCat?'depasse':''}"><b>${fmt(depCat)}</b> / ${fmt(c.budget)} FCFA</span>
+      </div>`;
+    }).join('');
     return `
     <div class="histo-budget-carte" style="animation-delay:${Math.min(i,8)*0.03}s">
       <div class="histo-budget-head">
