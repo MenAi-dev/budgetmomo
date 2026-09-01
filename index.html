@@ -849,7 +849,8 @@ function renderHistoriqueBudgets(){
   const zone = document.getElementById('histoBudgetsBody');
   if(!zone) return;
   if(historiqueBudgets.length===0){
-    zone.innerHTML = '<div class="vide">Aucun budget figé pour l\'instant. Il se figera automatiquement au changement de mois, ou tu peux le faire manuellement ci-dessous.</div>';
+    zone.innerHTML = '<div class="vide">Aucun budget défini. Il sera fixé automatiquement au début du mois, ou tu peux le définir ci-dessous.</div>';
+
     return;
   }
   zone.innerHTML = historiqueBudgets.map((h,i)=>{
