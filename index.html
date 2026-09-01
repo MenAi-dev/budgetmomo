@@ -3,15 +3,6 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<script>
-(function(){
-  try{
-    var t = localStorage.getItem('theme-preference');
-    if(!t){ t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; }
-    document.documentElement.setAttribute('data-theme', t);
-  }catch(e){}
-})();
-</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon Budget</title>
@@ -39,30 +30,6 @@
     --rayon:20px;
     --rayon-sm:14px;
     --spring: cubic-bezier(.32,.72,0,1);
-    --surface-a: rgba(255,255,255,0.08);
-    --surface-b: rgba(255,255,255,0.06);
-    --surface-hover: rgba(255,255,255,0.28);
-    --nav-bg: rgba(28,28,30,0.78);
-    --overlay-scrim: rgba(0,0,0,0.4);
-    color-scheme: dark;
-  }
-  html[data-theme="light"]{
-    --noir:#F2F2F7;
-    --noir-2:#FFFFFF;
-    --noir-3:#E9E9EE;
-    --blanc:#1C1C1E;
-    --gris:#6E6E73;
-    --gris-2:#6E6E73;
-    --ligne: rgba(60,60,67,0.29);
-    --surface-a: rgba(60,60,67,0.08);
-    --surface-b: rgba(60,60,67,0.06);
-    --surface-hover: rgba(60,60,67,0.35);
-    --nav-bg: rgba(255,255,255,0.78);
-    --overlay-scrim: rgba(0,0,0,0.25);
-    color-scheme: light;
-  }
-  html[data-theme="light"] body{
-    -webkit-font-smoothing:auto;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -93,14 +60,6 @@
   }
   .reset-btn:hover{background:rgba(255,69,58,0.25);}
   .reset-btn:active{transform:scale(.96);}
-  .theme-btn{
-    background:var(--surface-a); border:none; color:var(--blanc);
-    width:34px; height:34px; border-radius:980px; font-size:0.95rem; cursor:pointer;
-    display:inline-flex; align-items:center; justify-content:center; padding:0;
-    transition: background .15s ease, transform .15s var(--spring);
-  }
-  .theme-btn:hover{background:var(--surface-hover);}
-  .theme-btn:active{transform:scale(.96);}
   .cat-btn{
     background:rgba(10,132,255,0.15); border:none; color:var(--bleu-clair);
     padding:9px 16px; border-radius:980px; font-size:0.82rem; font-weight:600; cursor:pointer;
@@ -115,7 +74,7 @@
     background:var(--noir-2); width:fit-content; max-width:100%; overflow-x:auto;
     position:sticky; top:14px; z-index:10;
     -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
-    background:var(--nav-bg);
+    background:rgba(28,28,30,0.78);
   }
   .nav-btn{
     position:relative; background:none; border:none; color:var(--gris);
@@ -206,7 +165,7 @@
   }
   .lien-global:hover{background:var(--bleu-clair); transform:translateY(-1px);}
 
-  .barre-globale{height:10px; border-radius:6px; background:var(--surface-a); overflow:hidden; margin-top:22px;}
+  .barre-globale{height:10px; border-radius:6px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:22px;}
   .barre-globale-fill{height:100%; background:var(--bleu); border-radius:6px; transition:width .35s ease;}
   .barre-globale-txt{display:flex; justify-content:space-between; margin-top:8px; font-size:0.78rem; color:var(--gris);}
 
@@ -247,7 +206,7 @@
     animation: apparition .45s ease both;
     transition: transform .15s ease, border-color .15s ease, background .15s ease;
   }
-  .carte:hover{transform:translateY(-3px); border-color:var(--surface-hover);}
+  .carte:hover{transform:translateY(-3px); border-color:rgba(255,255,255,0.28);}
   .carte.flash{animation: flashCarte .9s ease;}
   .carte-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; row-gap:8px; margin-bottom:12px;}
   .carte-head .nom{font-weight:600; font-size:0.95rem;}
@@ -262,7 +221,7 @@
   .modif-btn:hover{border-color:var(--bleu); color:var(--bleu-clair);}
   .suppr-btn:hover{border-color:var(--rouge); color:var(--rouge); background:rgba(255,69,58,0.12);}
 
-  .barre{height:7px; border-radius:5px; background:var(--surface-a); overflow:hidden; margin-bottom:10px;}
+  .barre{height:7px; border-radius:5px; background:rgba(255,255,255,0.08); overflow:hidden; margin-bottom:10px;}
   .barre-fill{height:100%; border-radius:5px; background:var(--bleu); transition:width .35s ease;}
 
   .carte-foot{display:flex; justify-content:space-between; align-items:center; font-size:0.82rem;}
@@ -332,7 +291,7 @@
   .comparatif h2{font-size:1.1rem; font-weight:700; margin:0 0 20px;}
   .comp-ligne{display:grid; grid-template-columns:120px 1fr 84px; align-items:center; gap:12px; margin-bottom:13px; font-size:0.82rem;}
   .comp-ligne .nom{color:var(--gris);}
-  .comp-piste{position:relative; height:16px; background:var(--surface-a); border-radius:5px;}
+  .comp-piste{position:relative; height:16px; background:rgba(255,255,255,0.08); border-radius:5px;}
   .comp-budget-marker{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--blanc); opacity:0.6;}
   .comp-fill{position:absolute; top:0; bottom:0; left:0; border-radius:5px; background:var(--bleu); transition:width .35s ease;}
   .comp-fill.depasse{background:var(--rouge);}
@@ -374,7 +333,7 @@
   .histo-budget-reel{font-size:0.8rem; margin-top:5px; font-weight:600;}
   .histo-badge{
     display:inline-block; font-size:0.68rem; font-weight:600; color:var(--gris);
-    background:var(--surface-b); padding:2px 8px; border-radius:980px; margin-left:8px;
+    background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:980px; margin-left:8px;
     text-transform:none;
   }
   .histo-budget-detail{color:var(--gris); font-size:0.78rem; margin-top:4px; line-height:1.5;}
@@ -386,7 +345,7 @@
   .lien-discret:hover{opacity:0.95; text-decoration:underline;}
 
   .overlay{
-    position:fixed; inset:0; background:var(--overlay-scrim);
+    position:fixed; inset:0; background:rgba(0,0,0,0.4);
     -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
     display:none; align-items:flex-end; justify-content:center; z-index:50;
   }
@@ -447,17 +406,6 @@
   .pourcent-total.ok{color:var(--bleu-clair);}
   .pourcent-total.attention{color:var(--rouge);}
 
-  .evo-legende{display:flex; gap:16px; margin:16px 0 2px; font-size:0.78rem; color:var(--gris);}
-  .evo-legende span{display:inline-flex; align-items:center; gap:6px;}
-  .evo-legende i{width:10px; height:10px; border-radius:3px; display:inline-block;}
-  .evo-chart-wrap{margin-top:8px;}
-  .evo-chart-wrap svg{width:100%; height:auto; display:block; overflow:visible;}
-  .evo-ligne{fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;}
-  .evo-point{transition: r .15s ease;}
-  .evo-vide{color:var(--gris); font-size:0.85rem; padding:30px 0; text-align:center;}
-  .evo-resume{margin-top:12px; font-size:0.82rem; color:var(--gris);}
-  .evo-resume b{color:var(--blanc); font-weight:600;}
-
   footer{text-align:center; color:var(--gris); font-size:0.76rem; margin-top:44px;}
 
   /* --- Ajustements téléphone (petits écrans) --- */
@@ -498,7 +446,6 @@
     </div>
     <div class="header-actions">
       <button class="cat-btn" id="btnAjoutCat">+ Catégorie</button>
-      <button class="theme-btn" id="btnTheme" title="Changer de thème" aria-label="Changer de thème">🌙</button>
       <button class="reset-btn" id="btnReset" title="Réinitialiser les dépenses" aria-label="Réinitialiser les dépenses">🗑</button>
     </div>
   </header>
@@ -618,20 +565,6 @@
   <div class="comparatif">
     <h2>Budget vs dépensé</h2>
     <div id="comparatifBody"></div>
-  </div>
-
-  <div class="graphique-mois">
-    <div class="graphique-mois-head">
-      <h2>Évolution : dépenses vs budget</h2>
-    </div>
-    <div class="evo-legende">
-      <span><i style="background:var(--rouge)"></i> Dépensé</span>
-      <span><i style="background:var(--bleu-clair)"></i> Budget</span>
-    </div>
-    <div class="evo-chart-wrap" id="evoChartWrap">
-      <svg id="evoChart" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
-    <div class="evo-resume" id="evoResume"></div>
   </div>
   </div>
 
@@ -976,7 +909,7 @@ function rendre(){
     return `${c.couleur} ${start}deg ${end}deg`;
   }).join(', ');
   const donutEl = document.getElementById('donut');
-  donutEl.style.background = CATEGORIES.length ? `conic-gradient(${stops})` : 'var(--surface-a)';
+  donutEl.style.background = CATEGORIES.length ? `conic-gradient(${stops})` : 'rgba(255,255,255,0.08)';
   donutEl.style.setProperty('mask','radial-gradient(circle, transparent 56%, black 57%)');
   donutEl.style.setProperty('-webkit-mask','radial-gradient(circle, transparent 56%, black 57%)');
   document.getElementById('donutPct').textContent = Math.round(pctG)+'%';
@@ -1070,7 +1003,6 @@ function rendre(){
   renderEntrees();
   renderGraphiqueMois();
   renderGraphiqueRevenu();
-  renderEvolution();
   renderHistoriqueBudgets();
 }
 
@@ -1178,65 +1110,6 @@ function renderGraphiqueRevenu(){
       });
     });
   });
-}
-
-function renderEvolution(){
-  const maintenant = new Date();
-  const mois = [];
-  for(let i=5;i>=0;i--){
-    const d = new Date(maintenant.getFullYear(), maintenant.getMonth()-i, 1);
-    mois.push({ cle: d.toISOString().slice(0,7), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
-  }
-  const points = mois.map(m=>{
-    const dep = depenses.filter(d=>d.date && d.date.startsWith(m.cle)).reduce((s,d)=>s+d.montant,0);
-    const fige = historiqueBudgets.find(h=>h.mois===m.cle);
-    const budget = fige ? fige.total : totalBudget();
-    return { ...m, dep, budget };
-  });
-
-  const svg = document.getElementById('evoChart');
-  const wrap = document.getElementById('evoChartWrap');
-  const resume = document.getElementById('evoResume');
-
-  if(points.every(p=>p.dep===0 && p.budget===0)){
-    wrap.innerHTML = '<div class="evo-vide">Pas encore assez de données pour tracer une évolution.</div>';
-    resume.textContent = '';
-    return;
-  }
-  if(!svg.isConnected || !wrap.querySelector('svg')){
-    wrap.innerHTML = '<svg id="evoChart" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet"></svg>';
-  }
-  const svgEl = document.getElementById('evoChart');
-
-  const gauche=34, droite=610, haut=14, bas=150, labelY=176;
-  const maxVal = Math.max(...points.map(p=>Math.max(p.dep, p.budget)), 1);
-  const gap = (droite-gauche) / (points.length-1);
-  const xDe = i => gauche + i*gap;
-  const yDe = v => bas - (v/maxVal)*(bas-haut);
-
-  const ptsDep = points.map((p,i)=>`${xDe(i)},${yDe(p.dep)}`).join(' ');
-  const ptsBudget = points.map((p,i)=>`${xDe(i)},${yDe(p.budget)}`).join(' ');
-
-  let svgContenu = '';
-  // lignes de repère horizontales
-  for(let f=0; f<=2; f++){
-    const y = haut + (bas-haut)*f/2;
-    svgContenu += `<line x1="${gauche}" y1="${y}" x2="${droite}" y2="${y}" stroke="var(--ligne)" stroke-width="1"></line>`;
-  }
-  svgContenu += `<polyline class="evo-ligne" points="${ptsBudget}" stroke="var(--bleu-clair)" stroke-dasharray="5,5"></polyline>`;
-  svgContenu += `<polyline class="evo-ligne" points="${ptsDep}" stroke="var(--rouge)"></polyline>`;
-  points.forEach((p,i)=>{
-    const x = xDe(i);
-    svgContenu += `<circle class="evo-point" cx="${x}" cy="${yDe(p.budget)}" r="3" fill="var(--bleu-clair)"><title>${p.label} — budget : ${fmt(p.budget)} FCFA</title></circle>`;
-    svgContenu += `<circle class="evo-point" cx="${x}" cy="${yDe(p.dep)}" r="3.5" fill="var(--rouge)"><title>${p.label} — dépensé : ${fmt(p.dep)} FCFA</title></circle>`;
-    svgContenu += `<text x="${x}" y="${labelY}" text-anchor="middle" style="font-size:11px; fill:var(--gris);">${p.label}</text>`;
-  });
-  svgEl.innerHTML = svgContenu;
-
-  const dernier = points[points.length-1];
-  const ecart = dernier.budget - dernier.dep;
-  const depasse = dernier.dep > dernier.budget;
-  resume.innerHTML = `Ce mois-ci : <b>${fmt(dernier.dep)} FCFA</b> dépensés sur un budget de <b>${fmt(dernier.budget)} FCFA</b> — ${depasse ? 'dépassement de <b>'+fmt(Math.abs(ecart))+' FCFA</b>' : '<b>'+fmt(ecart)+' FCFA</b> restants'}.`;
 }
 
 function ouvrirModal(catId){
@@ -1493,21 +1366,7 @@ document.getElementById('nav').addEventListener('click', e=>{
   if(btn) basculerPanneau(btn.dataset.panel);
 });
 
-function appliquerTheme(theme){
-  document.documentElement.setAttribute('data-theme', theme);
-  const btn = document.getElementById('btnTheme');
-  if(btn) btn.textContent = theme==='light' ? '☀️' : '🌙';
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', theme==='light' ? '#F2F2F7' : '#000000');
-  try{ localStorage.setItem('theme-preference', theme); }catch(e){}
-}
-document.getElementById('btnTheme').addEventListener('click', ()=>{
-  const actuel = document.documentElement.getAttribute('data-theme') || 'dark';
-  appliquerTheme(actuel === 'dark' ? 'light' : 'dark');
-});
-
 async function init(){
-  appliquerTheme(document.documentElement.getAttribute('data-theme') || 'dark');
   await chargerTout();
   await verifierChangementMois();
   rendre();
