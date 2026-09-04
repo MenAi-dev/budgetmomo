@@ -480,137 +480,106 @@
     <button class="nav-btn" data-panel="historique"><span class="nav-fond"></span>Historique</button>
   </nav>
 
-  <div class="panel actif" data-panel="apercu">
-  <div class="solde-card">
-    <div class="haut">
-      <div>
-        <div class="label">Argent en poche</div>
-        <div class="sous-label">Ce que tu as réellement, au-delà du budget</div>
-      </div>
+  
+<div class="overlay" id="overlay">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3 id="modalTitre">Ajouter une dépense</h3>
+    <div class="sub" id="modalSub"></div>
+    <div class="champ">
+      <label for="inputMontant">Montant (FCFA)</label>
+      <input type="number" id="inputMontant" placeholder="ex : 1500" min="1">
     </div>
-    <div class="valeur" id="soldeDispo">0 <small>FCFA</small></div>
-    <div class="solde-detail">
-      <span>Entrées : <b id="soldeEntrees">0 FCFA</b></span>
-      <span>Dépenses : <b id="soldeDepenses">0 FCFA</b></span>
+    <div class="champ">
+      <label for="inputDate">Date</label>
+      <input type="date" id="inputDate">
     </div>
-  </div>
-
-  <div class="hero">
-    <div class="col-gauche">
-      <div class="stat">
-        <div class="label">Dépensé sur le mois</div>
-        <div class="valeur" id="totalDepense">0 <small>FCFA</small></div>
-      </div>
-      <div class="stat">
-        <div class="label">Restant</div>
-        <div class="valeur pos" id="totalRestant">0 <small>FCFA</small></div>
-      </div>
+    <div class="champ">
+      <label for="inputNote">Note (optionnel)</label>
+      <input type="text" id="inputNote" placeholder="ex : taxi, marché...">
     </div>
-    <div>
-      <div class="stat">
-        <div class="label">Budget total</div>
-        <div class="valeur" id="totalBudget">0 <small>FCFA</small></div>
-      </div>
-      <div class="barre-globale"><div class="barre-globale-fill" id="barreGlobale"></div></div>
-      <div class="barre-globale-txt"><span id="pctGlobal">0% utilisé</span><span>100%</span></div>
-      <button class="lien-global" id="btnModifierGlobal">Modifier</button>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnuler">Annuler</button>
+      <button class="btn-valider" id="btnValider">Ajouter</button>
     </div>
   </div>
-
-  <div class="repartition">
-    <div class="donut-holder">
-      <div id="donut"></div>
-      <div class="donut-center">
-        <div class="pct" id="donutPct">0%</div>
-        <div class="lbl">du budget utilisé</div>
-      </div>
-    </div>
-    <div class="legende-lignes" id="legende"></div>
-  </div>
-
-  <h2 class="section-titre">Postes</h2>
-  <div class="grille" id="grille"></div>
-  </div>
-
-  <div class="panel" data-panel="entrees">
-  <div class="entrees-section">
-    <div class="entrees-head">
-      <div>
-        <h2>Entrées d'argent</h2>
-        <div class="sous">Salaire, ventes, cadeaux... tout ce que tu reçois</div>
-      </div>
-      <button class="ajout-entree-btn" id="btnAjoutEntree">+ Ajouter une entrée</button>
-    </div>
-    <div class="entrees-total">
-      <div class="label">Total des entrées enregistrées</div>
-      <div class="valeur" id="totalEntrees">0 <small>FCFA</small></div>
-    </div>
-    <div id="entreesBody"></div>
-  </div>
-  </div>
-
-  <div class="panel" data-panel="analyse">
-  <div class="graphique-mois">
-    <div class="graphique-mois-head">
-      <h2>Vue mensuelle</h2>
-      <div class="mois-select-wrap">
-        <span class="mois-input" id="moisSelectLabel">—</span>
-        <input type="month" class="mois-input-natif" id="moisSelect" aria-label="Choisir le mois">
-      </div>
-    </div>
-    <div class="mois-stats">
-      <div class="item">
-        <div class="label">Dépensé ce mois</div>
-        <div class="valeur" id="moisDepense">0 FCFA</div>
-      </div>
-      <div class="item">
-        <div class="label">Entrées ce mois</div>
-        <div class="valeur" id="moisEntree">0 FCFA</div>
-      </div>
-    </div>
-    <div class="barres-mois" id="barresMois"></div>
-  </div>
-
-  <div class="graphique-mois">
-    <div class="graphique-mois-head">
-      <h2>Revenus</h2>
-    </div>
-    <div class="mois-stats">
-      <div class="item">
-        <div class="label">Moyenne (6 derniers mois)</div>
-        <div class="valeur" id="revenuMoyenne">0 FCFA</div>
-      </div>
-      <div class="item">
-        <div class="label">Ce mois-ci</div>
-        <div class="valeur" id="revenuCeMois">0 FCFA</div>
-      </div>
-    </div>
-    <div class="barres-mois" id="barresRevenu"></div>
-  </div>
-
-  <div class="comparatif">
-    <h2>Budget vs dépensé</h2>
-    <div id="comparatifBody"></div>
-  </div>
-  </div>
-
-  <div class="panel" data-panel="historique">
-  <div class="historique">
-    <div class="histo-budgets">
-      <h3>Budgets par mois</h3>
-      <div id="histoBudgetsBody"></div>
-    </div>
-    <h2>Historique</h2>
-    <div class="sous">Dernières dépenses enregistrées</div>
-    <div id="histoBody"></div>
-    <button type="button" class="lien-discret" id="btnFigerBudget">Figer le budget de ce mois dans l'historique</button>
-  </div>
-  </div>
-
-  <footer>Les données sont sauvegardées automatiquement sur cet appareil.</footer>
 </div>
 
+<div class="overlay" id="overlayBudget">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Modifier le budget</h3>
+    <div class="sub" id="modalBudgetSub"></div>
+    <div class="champ">
+      <label for="inputBudget">Nouveau montant (FCFA)</label>
+      <input type="number" id="inputBudget" placeholder="ex : 30000" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerBudget">Annuler</button>
+      <button class="btn-valider" id="btnValiderBudget">Enregistrer</button>
+    </div>
+    <div class="modal-delete-link">
+      <button type="button" id="btnSupprimerCat">Supprimer cette catégorie</button>
+    </div>
+  </div>
+</div>
 
+<div class="overlay" id="overlayGlobal">
+  <div class="modal modal-large"><div class="sheet-grabber"></div>
+    <h3>Modifier le budget global</h3>
+    <div class="sub">Définis le montant total, puis répartis-le en pourcentage entre tes postes.</div>
+    <div class="champ">
+      <label for="inputGlobalMontant">Budget global (FCFA)</label>
+      <input type="number" id="inputGlobalMontant" min="0">
+    </div>
+    <div class="repartition-pourcent" id="repartitionPourcent"></div>
+    <div class="pourcent-total" id="pourcentTotalTxt">Total : 0%</div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerGlobal">Annuler</button>
+      <button class="btn-valider" id="btnValiderGlobal">Appliquer la répartition</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayEntree">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Ajouter une entrée</h3>
+    <div class="sub">Argent reçu</div>
+    <div class="champ">
+      <label for="inputEntreeMontant">Montant (FCFA)</label>
+      <input type="number" id="inputEntreeMontant" placeholder="ex : 50000" min="1">
+    </div>
+    <div class="champ">
+      <label for="inputEntreeDate">Date</label>
+      <input type="date" id="inputEntreeDate">
+    </div>
+    <div class="champ">
+      <label for="inputEntreeNote">Source (optionnel)</label>
+      <input type="text" id="inputEntreeNote" placeholder="ex : salaire, vente...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerEntree">Annuler</button>
+      <button class="btn-valider" id="btnValiderEntree">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayCategorie">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Ajouter une catégorie</h3>
+    <div class="sub">Un nouveau poste de budget</div>
+    <div class="champ">
+      <label for="inputCatNom">Nom</label>
+      <input type="text" id="inputCatNom" placeholder="ex : Santé">
+    </div>
+    <div class="champ">
+      <label for="inputCatBudget">Budget (FCFA)</label>
+      <input type="number" id="inputCatBudget" placeholder="ex : 5000" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerCat">Annuler</button>
+      <button class="btn-valider" id="btnValiderCat">Ajouter</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const CATEGORIES_DEFAUT = [
@@ -619,6 +588,7 @@ const CATEGORIES_DEFAUT = [
   { id:'famille', nom:'Charge Famille',    budget:10000, couleur:'#0E3690' },
   { id:'perso', nom:'Perso',               budget:22000, couleur:'#8DB0FF' },
   { id:'imprevu', nom:'Imprévu',           budget:5000,  couleur:'#1C4FBD' },
+  { id:'epargne', nom:'Épargne',           budget:15000, couleur:'#A9C4FF' },
 ];
 let CATEGORIES = CATEGORIES_DEFAUT.map(c=>({...c}));
 const PALETTE_AUTO = ['#2F6FED','#5C8CFF','#0E3690','#8DB0FF','#1C4FBD','#A9C4FF','#3C5FCC','#6E86BF','#173B7A','#C3D4FF'];
