@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -306,8 +305,9 @@
 
   .historique{
     border:1px solid var(--ligne); border-radius:var(--rayon);
-    padding:26px 24px; background:var(--noir-2);
+    padding:26px 24px; background:var(--noir-2); margin-bottom:24px;
   }
+  .historique:last-child{margin-bottom:0;}
   .historique h2{font-size:1.1rem; font-weight:700; margin:0 0 4px;}
   .historique .sous{color:var(--gris); font-size:0.82rem; margin-bottom:16px;}
   .ligne-tx{
@@ -529,6 +529,21 @@
     <div class="legende-lignes" id="legende"></div>
   </div>
 
+  <div class="entrees-section">
+    <div class="entrees-head">
+      <div>
+        <h2>Épargne</h2>
+        <div class="sous">Ce que tu mets de côté — non compté comme une dépense</div>
+      </div>
+      <button class="ajout-entree-btn" id="btnAjoutEpargne">+ Ajouter une épargne</button>
+    </div>
+    <div class="entrees-total">
+      <div class="label">Total épargné</div>
+      <div class="valeur" id="totalEpargne">0 <small>FCFA</small></div>
+    </div>
+    <div id="epargneBody"></div>
+  </div>
+
   <h2 class="section-titre">Postes</h2>
   <div class="grille" id="grille"></div>
   </div>
@@ -589,6 +604,23 @@
     <div class="barres-mois" id="barresRevenu"></div>
   </div>
 
+  <div class="graphique-mois">
+    <div class="graphique-mois-head">
+      <h2>Épargne</h2>
+    </div>
+    <div class="mois-stats">
+      <div class="item">
+        <div class="label">Moyenne (6 derniers mois)</div>
+        <div class="valeur" id="epargneMoyenne">0 FCFA</div>
+      </div>
+      <div class="item">
+        <div class="label">Ce mois-ci</div>
+        <div class="valeur" id="epargneCeMois">0 FCFA</div>
+      </div>
+    </div>
+    <div class="barres-mois" id="barresEpargne"></div>
+  </div>
+
   <div class="comparatif">
     <h2>Budget vs dépensé</h2>
     <div id="comparatifBody"></div>
@@ -606,12 +638,139 @@
     <div id="histoBody"></div>
     <button type="button" class="lien-discret" id="btnFigerBudget">Figer le budget de ce mois dans l'historique</button>
   </div>
+
+  <div class="historique">
+    <h2>Historique de l'épargne</h2>
+    <div class="sous">Dernières épargnes enregistrées</div>
+    <div id="histoEpargneBody"></div>
+  </div>
   </div>
 
   <footer>Les données sont sauvegardées automatiquement sur cet appareil.</footer>
 </div>
 
+<div class="overlay" id="overlay">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3 id="modalTitre">Ajouter une dépense</h3>
+    <div class="sub" id="modalSub"></div>
+    <div class="champ">
+      <label for="inputMontant">Montant (FCFA)</label>
+      <input type="number" id="inputMontant" placeholder="ex : 1500" min="1">
+    </div>
+    <div class="champ">
+      <label for="inputDate">Date</label>
+      <input type="date" id="inputDate">
+    </div>
+    <div class="champ">
+      <label for="inputNote">Note (optionnel)</label>
+      <input type="text" id="inputNote" placeholder="ex : taxi, marché...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnuler">Annuler</button>
+      <button class="btn-valider" id="btnValider">Ajouter</button>
+    </div>
+  </div>
+</div>
 
+<div class="overlay" id="overlayBudget">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Modifier le budget</h3>
+    <div class="sub" id="modalBudgetSub"></div>
+    <div class="champ">
+      <label for="inputBudget">Nouveau montant (FCFA)</label>
+      <input type="number" id="inputBudget" placeholder="ex : 30000" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerBudget">Annuler</button>
+      <button class="btn-valider" id="btnValiderBudget">Enregistrer</button>
+    </div>
+    <div class="modal-delete-link">
+      <button type="button" id="btnSupprimerCat">Supprimer cette catégorie</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayGlobal">
+  <div class="modal modal-large"><div class="sheet-grabber"></div>
+    <h3>Modifier le budget global</h3>
+    <div class="sub">Définis le montant total, puis répartis-le en pourcentage entre tes postes.</div>
+    <div class="champ">
+      <label for="inputGlobalMontant">Budget global (FCFA)</label>
+      <input type="number" id="inputGlobalMontant" min="0">
+    </div>
+    <div class="repartition-pourcent" id="repartitionPourcent"></div>
+    <div class="pourcent-total" id="pourcentTotalTxt">Total : 0%</div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerGlobal">Annuler</button>
+      <button class="btn-valider" id="btnValiderGlobal">Appliquer la répartition</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayEntree">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Ajouter une entrée</h3>
+    <div class="sub">Argent reçu</div>
+    <div class="champ">
+      <label for="inputEntreeMontant">Montant (FCFA)</label>
+      <input type="number" id="inputEntreeMontant" placeholder="ex : 50000" min="1">
+    </div>
+    <div class="champ">
+      <label for="inputEntreeDate">Date</label>
+      <input type="date" id="inputEntreeDate">
+    </div>
+    <div class="champ">
+      <label for="inputEntreeNote">Source (optionnel)</label>
+      <input type="text" id="inputEntreeNote" placeholder="ex : salaire, vente...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerEntree">Annuler</button>
+      <button class="btn-valider" id="btnValiderEntree">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayEpargne">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Ajouter une épargne</h3>
+    <div class="sub">Montant mis de côté ce mois-ci</div>
+    <div class="champ">
+      <label for="inputEpargneMontant">Montant (FCFA)</label>
+      <input type="number" id="inputEpargneMontant" placeholder="ex : 20000" min="1">
+    </div>
+    <div class="champ">
+      <label for="inputEpargneDate">Date</label>
+      <input type="date" id="inputEpargneDate">
+    </div>
+    <div class="champ">
+      <label for="inputEpargneNote">Note (optionnel)</label>
+      <input type="text" id="inputEpargneNote" placeholder="ex : épargne du mois">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerEpargne">Annuler</button>
+      <button class="btn-valider" id="btnValiderEpargne">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayCategorie">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3>Ajouter une catégorie</h3>
+    <div class="sub">Un nouveau poste de budget</div>
+    <div class="champ">
+      <label for="inputCatNom">Nom</label>
+      <input type="text" id="inputCatNom" placeholder="ex : Santé">
+    </div>
+    <div class="champ">
+      <label for="inputCatBudget">Budget (FCFA)</label>
+      <input type="number" id="inputCatBudget" placeholder="ex : 5000" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerCat">Annuler</button>
+      <button class="btn-valider" id="btnValiderCat">Ajouter</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const CATEGORIES_DEFAUT = [
@@ -620,6 +779,7 @@ const CATEGORIES_DEFAUT = [
   { id:'famille', nom:'Charge Famille',    budget:10000, couleur:'#0E3690' },
   { id:'perso', nom:'Perso',               budget:22000, couleur:'#8DB0FF' },
   { id:'imprevu', nom:'Imprévu',           budget:5000,  couleur:'#1C4FBD' },
+  { id:'epargne', nom:'Épargne',           budget:15000, couleur:'#A9C4FF' },
 ];
 let CATEGORIES = CATEGORIES_DEFAUT.map(c=>({...c}));
 const PALETTE_AUTO = ['#2F6FED','#5C8CFF','#0E3690','#8DB0FF','#1C4FBD','#A9C4FF','#3C5FCC','#6E86BF','#173B7A','#C3D4FF'];
@@ -632,6 +792,7 @@ const moisActuel = () => new Date().toISOString().slice(0,7);
 
 let depenses = [];
 let entrees = [];
+let epargnes = [];
 let historiqueBudgets = []; // budgets figés par mois : { mois, categories, total, valideLe, methode }
 let dernierMoisVu = null;
 let categoriePourAjout = null;
@@ -639,6 +800,7 @@ let categoriePourBudget = null;
 let prevDepenseTotal = 0;
 let prevRestantTotal = totalBudget();
 let prevEntreesTotal = 0;
+let prevEpargneTotal = 0;
 let prevSoldeTotal = 0;
 
 function animerValeur(el, debut, fin, versTexte){
@@ -673,6 +835,7 @@ async function chargerTout(){
       if(Array.isArray(data.categories) && data.categories.length) CATEGORIES = data.categories;
       depenses = Array.isArray(data.depenses) ? data.depenses : [];
       entrees = Array.isArray(data.entrees) ? data.entrees : [];
+      epargnes = Array.isArray(data.epargnes) ? data.epargnes : [];
       historiqueBudgets = Array.isArray(data.historiqueBudgets) ? data.historiqueBudgets : [];
       dernierMoisVu = typeof data.dernierMoisVu === 'string' ? data.dernierMoisVu : null;
       prevRestantTotal = totalBudget();
@@ -709,7 +872,7 @@ async function chargerTout(){
 
 async function sauvegarderTout(){
   try{
-    localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ categories: CATEGORIES, depenses, entrees, historiqueBudgets, dernierMoisVu }));
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, dernierMoisVu }));
   }catch(e){ console.error('Erreur de sauvegarde', e); }
 }
 
@@ -934,9 +1097,33 @@ function rendre(){
     });
   }
 
+  const histoEpargne = [...epargnes].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||''));
+  if(histoEpargne.length===0){
+    document.getElementById('histoEpargneBody').innerHTML = '<div class="vide">Aucune épargne enregistrée pour le moment.</div>';
+  } else {
+    document.getElementById('histoEpargneBody').innerHTML = histoEpargne.map((e,i)=>{
+      const dateStr = e.date ? new Date(e.date+'T00:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}) : '';
+      return `
+      <div class="ligne-entree" style="animation-delay:${Math.min(i,8)*0.03}s">
+        <span class="dot"></span>
+        <div>
+          <div>${e.note ? e.note : 'Épargne'}</div>
+          <div class="meta">${dateStr}</div>
+        </div>
+        <div class="montant">+${fmt(e.montant)} FCFA</div>
+        <button class="del" data-id="${e.id}" title="Supprimer">×</button>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('#histoEpargneBody .del').forEach(b=>{
+      b.addEventListener('click', ()=>supprimerEpargne(b.dataset.id));
+    });
+  }
+
   renderEntrees();
+  renderEpargne();
   renderGraphiqueMois();
   renderGraphiqueRevenu();
+  renderGraphiqueEpargne();
   renderHistoriqueBudgets();
 }
 
@@ -965,6 +1152,34 @@ function renderEntrees(){
   }).join('');
   document.querySelectorAll('#entreesBody .del').forEach(b=>{
     b.addEventListener('click', ()=>supprimerEntree(b.dataset.id));
+  });
+}
+
+function renderEpargne(){
+  const total = epargnes.reduce((s,e)=>s+e.montant,0);
+  animerValeur(document.getElementById('totalEpargne'), prevEpargneTotal, total, v=>fmt(v)+' <small>FCFA</small>');
+  prevEpargneTotal = total;
+  const tri = [...epargnes].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||''));
+  const body = document.getElementById('epargneBody');
+  if(tri.length===0){
+    body.innerHTML = '<div class="vide">Aucune épargne enregistrée pour le moment.</div>';
+    return;
+  }
+  body.innerHTML = tri.map((e,i)=>{
+    const dateStr = e.date ? new Date(e.date+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '';
+    return `
+    <div class="ligne-entree" style="animation-delay:${Math.min(i,8)*0.03}s">
+      <span class="dot"></span>
+      <div>
+        <div>${e.note ? e.note : 'Épargne'}</div>
+        <div class="meta">${dateStr}</div>
+      </div>
+      <div class="montant">+${fmt(e.montant)} FCFA</div>
+      <button class="del" data-id="${e.id}" title="Supprimer">×</button>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#epargneBody .del').forEach(b=>{
+    b.addEventListener('click', ()=>supprimerEpargne(b.dataset.id));
   });
 }
 
@@ -1039,6 +1254,45 @@ function renderGraphiqueRevenu(){
     <div class="barre-col">
       <div class="valeur-barre">${m.total ? fmt(m.total) : ''}</div>
       <div class="barre-visuelle" style="height:0px; background:var(--vert); transition-delay:${i*0.05}s" data-h="${h}"></div>
+      <div class="label-barre">${m.label}</div>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      conteneur.querySelectorAll('.barre-visuelle').forEach(el=>{
+        el.style.height = el.dataset.h + 'px';
+      });
+    });
+  });
+}
+
+function renderGraphiqueEpargne(){
+  const maintenant = new Date();
+  const mois = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(maintenant.getFullYear(), maintenant.getMonth()-i, 1);
+    mois.push({ cle: d.toISOString().slice(0,7), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
+  }
+  const totaux = mois.map(m=>({
+    ...m,
+    total: epargnes.filter(e=>e.date && e.date.startsWith(m.cle)).reduce((s,e)=>s+e.montant,0)
+  }));
+  const moyenne = totaux.reduce((s,m)=>s+m.total,0) / totaux.length;
+  document.getElementById('epargneMoyenne').textContent = fmt(moyenne)+' FCFA';
+  document.getElementById('epargneCeMois').textContent = fmt(totaux[totaux.length-1].total)+' FCFA';
+
+  const conteneur = document.getElementById('barresEpargne');
+  if(totaux.every(m=>m.total===0)){
+    conteneur.innerHTML = '<div class="mois-vide">Aucune épargne enregistrée sur les 6 derniers mois.</div>';
+    return;
+  }
+  const max = Math.max(...totaux.map(m=>m.total), 1);
+  conteneur.innerHTML = totaux.map((m,i)=>{
+    const h = m.total ? Math.max(6, (m.total/max)*150) : 2;
+    return `
+    <div class="barre-col">
+      <div class="valeur-barre">${m.total ? fmt(m.total) : ''}</div>
+      <div class="barre-visuelle" style="height:0px; background:var(--bleu-clair); transition-delay:${i*0.05}s" data-h="${h}"></div>
       <div class="label-barre">${m.label}</div>
     </div>`;
   }).join('');
@@ -1161,6 +1415,38 @@ async function supprimerEntree(id){
   rendre();
 }
 
+function ouvrirModalEpargne(){
+  document.getElementById('inputEpargneMontant').value = '';
+  document.getElementById('inputEpargneDate').value = auj();
+  document.getElementById('inputEpargneNote').value = '';
+  document.getElementById('overlayEpargne').classList.add('actif');
+  document.getElementById('inputEpargneMontant').focus();
+}
+function fermerModalEpargne(){
+  document.getElementById('overlayEpargne').classList.remove('actif');
+}
+async function validerEpargne(){
+  const montant = parseFloat(document.getElementById('inputEpargneMontant').value);
+  if(!montant || montant<=0) return;
+  const date = document.getElementById('inputEpargneDate').value || auj();
+  const note = document.getElementById('inputEpargneNote').value.trim();
+  epargnes.push({
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    montant,
+    note,
+    date
+  });
+  await sauvegarderTout();
+  fermerModalEpargne();
+  rendre();
+  declencherPulse(document.getElementById('totalEpargne'));
+}
+async function supprimerEpargne(id){
+  epargnes = epargnes.filter(e=>e.id!==id);
+  await sauvegarderTout();
+  rendre();
+}
+
 function ouvrirModalGlobal(){
   const budgetActuel = totalBudget();
   document.getElementById('inputGlobalMontant').value = budgetActuel;
@@ -1260,6 +1546,12 @@ document.getElementById('btnAnnulerEntree').addEventListener('click', fermerModa
 document.getElementById('btnValiderEntree').addEventListener('click', validerEntree);
 document.getElementById('overlayEntree').addEventListener('click', e=>{ if(e.target.id==='overlayEntree') fermerModalEntree(); });
 document.getElementById('inputEntreeMontant').addEventListener('keydown', e=>{ if(e.key==='Enter') validerEntree(); });
+
+document.getElementById('btnAjoutEpargne').addEventListener('click', ouvrirModalEpargne);
+document.getElementById('btnAnnulerEpargne').addEventListener('click', fermerModalEpargne);
+document.getElementById('btnValiderEpargne').addEventListener('click', validerEpargne);
+document.getElementById('overlayEpargne').addEventListener('click', e=>{ if(e.target.id==='overlayEpargne') fermerModalEpargne(); });
+document.getElementById('inputEpargneMontant').addEventListener('keydown', e=>{ if(e.key==='Enter') validerEpargne(); });
 
 document.getElementById('btnAjoutCat').addEventListener('click', ouvrirModalCategorie);
 document.getElementById('btnAnnulerCat').addEventListener('click', fermerModalCategorie);
