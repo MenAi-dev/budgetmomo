@@ -25,40 +25,33 @@ async function verifierChangementMois(){
   }
 }
 
-function renderHistoriqueBudgets(){
-  const zone = document.getElementById('histoBudgetsBody');
+// Résumé budget prévu / dépensé du mois affiché dans l'historique (mois terminés uniquement,
+// et seulement si leur budget a été figé). Le détail par poste est repliable.
+function renderResumeMoisHisto(){
+  const zone = document.getElementById('histoResumeMois');
   if(!zone) return;
-  const termines = historiqueBudgets.filter(h=>h.mois < moisActuel());
-  if(termines.length===0){
-    zone.innerHTML = '<div class="vide">Les mois terminés apparaîtront ici automatiquement.</div>';
-    return;
-  }
-  zone.innerHTML = termines.map((h,i)=>{
-    const label = new Date(h.mois+'-01T00:00:00').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-    const depMoisListe = depenses.filter(d=>d.date && d.date.startsWith(h.mois));
-    const totalDepMois = depMoisListe.reduce((s,d)=>s+d.montant,0);
-    const ecart = h.total - totalDepMois;
-    const depasse = totalDepMois > h.total;
-    const detail = h.categories.map(c=>{
-      const depCat = depMoisListe.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0);
-      const depasseCat = depCat > c.budget;
-      return `
+  const mois = moisAffiche();
+  const h = (mois < moisActuel() && !rechercheEnCours()) ? historiqueBudgets.find(x=>x.mois===mois) : null;
+  if(!h){ zone.innerHTML = ''; return; }
+  const depMoisListe = depenses.filter(d=>d.date && d.date.startsWith(mois));
+  const totalDepMois = depMoisListe.reduce((s,d)=>s+d.montant,0);
+  const ecart = h.total - totalDepMois;
+  const depasse = totalDepMois > h.total;
+  const detail = h.categories.map(c=>{
+    const depCat = depMoisListe.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0);
+    return `
       <div class="histo-detail-ligne">
         <span class="dot" style="background:${c.couleur}"></span>
         <span class="nom">${c.nom}</span>
-        <span class="valeurs ${depasseCat?'depasse':''}"><b>${fmt(depCat)}</b> / ${fmt(c.budget)} FCFA</span>
+        <span class="valeurs ${depCat > c.budget ? 'depasse' : ''}"><b>${fmt(depCat)}</b> / ${fmt(c.budget)} FCFA</span>
       </div>`;
-    }).join('');
-    return `
-    <div class="histo-budget-carte" style="animation-delay:${Math.min(i,8)*0.03}s">
-      <div class="histo-budget-head">
-        <span class="histo-budget-mois">${label}</span>
-        <div class="histo-budget-droite">
-          <span class="histo-budget-total">${fmt(h.total)} FCFA</span>
-        </div>
-      </div>
-      <div class="histo-budget-reel ${depasse?'neg':'pos'}">Dépensé réellement : ${fmt(totalDepMois)} FCFA — ${depasse ? 'dépassement de '+fmt(Math.abs(ecart)) : 'reste '+fmt(ecart)} FCFA</div>
-      <div class="histo-budget-detail">${detail}</div>
-    </div>`;
   }).join('');
+  zone.innerHTML = `
+    <details class="histo-resume">
+      <summary>
+        <span class="histo-resume-txt">Budget prévu : <b>${fmt(h.total)} FCFA</b></span>
+        <span class="histo-budget-reel ${depasse?'neg':'pos'}">${depasse ? 'Dépassement de '+fmt(Math.abs(ecart)) : 'Reste '+fmt(ecart)} FCFA</span>
+      </summary>
+      <div class="histo-budget-detail">${detail}</div>
+    </details>`;
 }

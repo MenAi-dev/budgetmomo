@@ -170,7 +170,6 @@ function rendre(){
   renderGraphiqueMois();
   renderGraphiqueRevenu();
   renderGraphiqueEpargne();
-  renderHistoriqueBudgets();
   renderObjectif();
   renderGraphiqueAccueil();
   brancherEditions();

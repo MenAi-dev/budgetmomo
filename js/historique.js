@@ -66,6 +66,7 @@ function renderHistoriqueDepenses(){
   const resume = document.getElementById('filtreResumeTexte');
   const btnReset = document.getElementById('btnResetFiltres');
   if(!corps) return;
+  renderResumeMoisHisto();
 
   const liste = depensesFiltrees().sort((a,b)=>
     (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
