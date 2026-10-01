@@ -193,33 +193,25 @@
   .ligne-tx .dot{width:7px; height:7px; border-radius:50%;}
   .ligne-tx .meta{color:var(--gris); font-size:0.78rem;}
   .ligne-tx .montant{font-weight:700; white-space:nowrap; color:var(--rouge);}
-  .ligne-tx .del, .ligne-entree .del, .histo-budget-carte .del{
+  .ligne-tx .del, .ligne-entree .del{
     background:none; border:none; color:var(--gris); cursor:pointer; font-size:1.05rem;
     line-height:1; padding:2px 6px; border-radius:6px;
   }
-  .ligne-tx .del:hover, .ligne-entree .del:hover, .histo-budget-carte .del:hover{color:var(--rouge); background:rgba(229,72,77,0.12);}
+  .ligne-tx .del:hover, .ligne-entree .del:hover{color:var(--rouge); background:rgba(229,72,77,0.12);}
   .vide{color:var(--gris); font-size:0.86rem; padding:16px 0; text-align:center;}
 
-  .histo-budgets{margin-bottom:26px;}
-  .histo-budgets h3{font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--gris); font-weight:600; margin:0 0 12px;}
-  .histo-budget-carte{
-    border-top:1px solid var(--ligne); padding:13px 0; animation: apparition .4s ease both;
+  .histo-resume{margin:0 0 12px; border:1px solid var(--ligne); border-radius:12px; background:rgba(255,255,255,0.03); padding:0 12px;}
+  .histo-resume summary{
+    list-style:none; cursor:pointer; padding:10px 0; display:flex; justify-content:space-between;
+    align-items:center; gap:10px; flex-wrap:wrap; font-size:0.82rem;
   }
-  .histo-budget-carte:first-of-type{border-top:none;}
-  .histo-budget-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-  .histo-budget-mois{font-weight:700; font-size:0.92rem; text-transform:capitalize;}
-  .histo-budget-droite{display:flex; align-items:center; gap:6px;}
-  .histo-budget-total{font-weight:700; font-size:0.92rem; color:var(--bleu-clair);}
-  .histo-budget-reel{font-size:0.8rem; margin-top:5px; font-weight:600;}
-  .histo-badge{
-    display:inline-block; font-size:0.68rem; font-weight:600; color:var(--gris);
-    background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:980px; margin-left:8px;
-    text-transform:none;
-  }
-  .histo-budget-detail{
-    margin-top:10px; border:1px solid var(--ligne); border-radius:12px;
-    padding:4px 12px; background:rgba(255,255,255,0.03);
-  }
+  .histo-resume summary::-webkit-details-marker{display:none;}
+  .histo-resume summary::after{content:'▾'; color:var(--gris); margin-left:auto; padding-left:8px; transition:transform .2s ease;}
+  .histo-resume[open] summary::after{transform:rotate(180deg);}
+  .histo-resume-txt{color:var(--gris);}
+  .histo-resume-txt b{color:var(--bleu-clair);}
+  .histo-budget-reel{font-weight:600; font-size:0.8rem;}
+  .histo-budget-detail{border-top:1px solid var(--ligne); padding:2px 0 6px;}
   .histo-detail-ligne{
     display:flex; align-items:center; gap:9px; padding:8px 0;
     border-bottom:1px solid var(--ligne); font-size:0.78rem;
