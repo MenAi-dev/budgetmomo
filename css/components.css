@@ -353,3 +353,54 @@
   .nav-mois.inactif{opacity:0.45;}
   .filtres-ligne{grid-template-columns:1fr;}
   .nav-mois span small{display:block; font-weight:400; font-size:0.72rem; color:var(--gris); margin-top:1px;}
+
+  /* Vue mensuelle : répartition segmentée + classement des postes */
+  .vue-mois{margin-top:18px;}
+  .repart-barre{display:flex; gap:3px; height:16px; border-radius:980px; overflow:hidden; background:var(--noir);}
+  .repart-barre .seg{display:block; width:0; height:100%; transition:width .8s cubic-bezier(.22,1,.36,1);}
+  .repart-legende{color:var(--gris); font-size:0.78rem; margin:10px 0 22px;}
+  .rangs{display:flex; flex-direction:column; gap:18px;}
+  .rang{animation:panelIn .4s cubic-bezier(.22,1,.36,1) both;}
+  .rang-tete{display:flex; justify-content:space-between; align-items:baseline; gap:12px;}
+  .rang-nom{display:flex; align-items:center; gap:9px; font-size:0.92rem; font-weight:600;}
+  .rang-nom .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .rang-montant{font-size:0.95rem; font-weight:700; white-space:nowrap;}
+  .rang-montant small{color:var(--gris); font-weight:500; font-size:0.7rem;}
+  .rang-pct{display:inline-block; min-width:42px; text-align:right; color:var(--gris); font-weight:600; font-size:0.8rem;}
+  .rang-piste{height:8px; border-radius:980px; background:var(--noir); margin:8px 0 6px; overflow:hidden;}
+  .rang-fill{height:100%; width:0; border-radius:980px; transition:width .9s cubic-bezier(.22,1,.36,1);}
+  .rang-fill.depasse{box-shadow:0 0 0 2px var(--rouge) inset;}
+  .rang-detail{color:var(--gris); font-size:0.74rem;}
+  .rang-alerte{color:var(--rouge); font-weight:600;}
+
+  /* Courbe cumulée */
+  .courbe-bloc{margin-bottom:26px;}
+  .courbe-tete{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .courbe-titre{font-size:0.85rem; color:var(--gris);}
+  .courbe-titre b{color:var(--blanc);}
+  .c-verdict{display:block; font-size:0.78rem; font-weight:600; margin:8px 0 2px;}
+  .c-verdict.mauvais{color:var(--rouge);} .c-verdict.bon{color:var(--vert);}
+  .courbe-wrap{position:relative; margin-top:10px; max-width:560px;}
+  .courbe-svg{width:100%; height:auto; display:block; touch-action:pan-y; user-select:none; -webkit-user-select:none;}
+  .c-grille{stroke:rgba(84,84,88,.45); stroke-width:1; stroke-dasharray:2 4;}
+  .c-axe{fill:var(--gris); font-size:11px;}
+  .c-budget{stroke:var(--gris-2); stroke-width:1.2; stroke-dasharray:5 4;}
+  .c-budget-txt{fill:var(--gris-2);}
+  .c-fantome{fill:none; stroke:rgba(255,255,255,.28); stroke-width:1.5;}
+  .c-ligne{fill:none; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .c-ligne.c-rouge{stroke:var(--rouge);}
+  .c-proj{stroke-width:2; stroke-dasharray:5 5; stroke-linecap:round;}
+  .c-curseur{stroke:rgba(255,255,255,.5); stroke-width:1;}
+  .c-point{stroke:var(--noir-2); stroke-width:2;}
+  .courbe-tip{position:absolute; top:0; transform:translateX(-50%); background:rgba(44,44,46,.96); border:1px solid var(--ligne); border-radius:12px; padding:9px 12px; min-width:130px; max-width:210px; pointer-events:none; z-index:3; box-shadow:0 6px 20px rgba(0,0,0,.45);}
+  .tip-date{color:var(--gris); font-size:0.7rem; text-transform:capitalize;}
+  .tip-cumul{font-weight:700; font-size:0.9rem; margin-top:2px;} .tip-cumul small{color:var(--gris); font-weight:500; font-size:0.68rem;}
+  .tip-jour{color:var(--orange); font-size:0.75rem; font-weight:600; margin-top:5px;}
+  .tip-ligne{color:var(--gris-2); font-size:0.7rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .courbe-leg{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:8px; font-size:0.7rem; color:var(--gris);}
+  .courbe-leg i{display:inline-block; width:16px; vertical-align:middle; margin-right:6px;}
+  .courbe-leg .l-plein{height:3px; border-radius:2px;} .courbe-leg .l-f{background:rgba(255,255,255,.35);}
+  .courbe-leg .l-tirets{height:0; border-top:2px dashed; } .courbe-leg .l-b{border-color:var(--gris-2);}
+  .courbe-aide{color:var(--gris); font-size:0.72rem; margin-top:8px;}
+  .rang{cursor:pointer; border-radius:12px; padding:8px 10px; margin:-8px -10px; transition:opacity .2s ease, background .2s ease;}
+  .rang.actif{background:rgba(255,255,255,.06);} .rang.attenue{opacity:.4;}

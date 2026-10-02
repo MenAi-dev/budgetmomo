@@ -268,27 +268,55 @@ function renderGraphiqueMois(){
     conteneur.innerHTML = '<div class="mois-vide">Aucune dépense enregistrée pour ce mois.</div>';
     return;
   }
-  const parCategorie = CATEGORIES.map(c=>({
-    ...c,
-    total: depMois.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0)
-  }));
-  const max = Math.max(...parCategorie.map(c=>c.total), 1);
-  conteneur.innerHTML = parCategorie.map((c,i)=>{
-    const h = c.total ? Math.max(6, (c.total/max)*150) : 2;
+  // Budgets : figés pour un mois passé, budget actuel pour le mois en cours.
+  const fige = mois < moisActuel() ? historiqueBudgets.find(h=>h.mois===mois) : null;
+  const budgetDe = c => {
+    const f = fige && fige.categories.find(x=>x.id===c.id);
+    return f ? f.budget : c.budget;
+  };
+  const lignes = CATEGORIES
+    .map((c,i)=>({
+      id:c.id, nom:c.nom, couleur:COULEURS_GRAPHIQUE[i % COULEURS_GRAPHIQUE.length], budget:budgetDe(c),
+      total: depMois.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0)
+    }))
+    .filter(l=>l.total>0)
+    .sort((a,b)=>b.total-a.total);
+
+  const segments = lignes.map(l=>
+    `<span class="seg" style="background:${l.couleur}" data-w="${(l.total/totalDepMois*100).toFixed(2)}" title="${l.nom} · ${fmt(l.total)} FCFA"></span>`
+  ).join('');
+
+  const rangs = lignes.map((l,i)=>{
+    const pct = Math.round(l.total/totalDepMois*100);
+    const ratio = l.budget > 0 ? l.total/l.budget : 0;
+    const depasse = l.budget > 0 && l.total > l.budget;
+    const remplissage = l.budget > 0 ? Math.min(ratio,1)*100 : 100;
+    const detail = l.budget > 0
+      ? (depasse ? `<span class="rang-alerte">+${fmt(l.total-l.budget)} au-dessus du budget</span>`
+                 : `${Math.round(ratio*100)} % du budget · reste ${fmt(l.budget-l.total)}`)
+      : 'Pas de budget défini';
     return `
-    <div class="barre-col">
-      <div class="valeur-barre">${c.total ? fmt(c.total) : ''}</div>
-      <div class="barre-visuelle" style="height:0px; background:${c.couleur}; transition-delay:${i*0.05}s" data-h="${h}"></div>
-      <div class="label-barre">${c.nom}</div>
+    <div class="rang" data-id="${l.id}" style="animation-delay:${i*0.05}s">
+      <div class="rang-tete">
+        <span class="rang-nom"><span class="dot" style="background:${l.couleur}"></span>${l.nom}</span>
+        <span class="rang-montant">${fmt(l.total)} <small>FCFA</small><span class="rang-pct">${pct}%</span></span>
+      </div>
+      <div class="rang-piste"><div class="rang-fill${depasse?' depasse':''}" style="background:${l.couleur}" data-w="${remplissage.toFixed(1)}"></div></div>
+      <div class="rang-detail">${detail}</div>
     </div>`;
   }).join('');
+
+  conteneur.innerHTML = `
+    <div class="courbe-bloc" id="courbeBloc"></div>
+    <div class="repart-barre">${segments}</div>
+    <div class="repart-legende">${lignes.length} poste${lignes.length>1?'s':''} · plus gros : <b style="color:${lignes[0].couleur}">${lignes[0].nom}</b> (${Math.round(lignes[0].total/totalDepMois*100)} %)</div>
+    <div class="rangs">${rangs}</div>`;
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      document.querySelectorAll('.barre-visuelle').forEach(el=>{
-        el.style.height = el.dataset.h + 'px';
-      });
+      conteneur.querySelectorAll('[data-w]').forEach(el=>{ el.style.width = el.dataset.w + '%'; });
     });
   });
+  initCourbe(mois, lignes, fige ? fige.total : totalBudget());
 }
 
 function renderGraphiqueRevenu(){
@@ -379,3 +407,107 @@ function renderGraphiqueEpargne(){
   });
 }
 
+
+// ===== Courbe cumulée du mois (dynamique : toucher un jour / toucher un poste) =====
+let courbeSel = null, courbeMois = null;
+const kfmt = n => n >= 1000 ? (Math.round(n/100)/10).toString().replace('.',',') + ' k' : String(Math.round(n));
+const esc = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function initCourbe(mois, lignes, budgetTotal){
+  const bloc = document.getElementById('courbeBloc');
+  if(!bloc) return;
+  if(mois !== courbeMois){ courbeMois = mois; courbeSel = null; }
+  if(courbeSel && !lignes.some(l=>l.id===courbeSel)) courbeSel = null;
+  const [y,m] = mois.split('-').map(Number);
+  const J = new Date(y,m,0).getDate();
+  const enCours = mois === moisActuel();
+  const jourC = enCours ? Math.min(J, contexteMois().jour) : J;
+  const pY = m===1 ? y-1 : y, pM = m===1 ? 12 : m-1;
+  const pCle = pY+'-'+String(pM).padStart(2,'0');
+  const PJ = new Date(pY,pM,0).getDate();
+  const W=420, H=210, gL=34, gR=8, gT=10, gB=22;
+
+  function cumul(cle, nbJours, filtre, jusqua){
+    const par = Array(nbJours+1).fill(0);
+    depensesDuMois(cle).filter(filtre).forEach(d=>{ const j = Number(d.date.slice(8,10)); if(j>=1 && j<=nbJours) par[j]+=d.montant; });
+    const cum = [0]; for(let j=1;j<=jusqua;j++) cum[j] = cum[j-1] + par[j];
+    return { par, cum };
+  }
+
+  function tracer(){
+    const ligne = courbeSel ? lignes.find(l=>l.id===courbeSel) : null;
+    const filtre = d => !courbeSel || d.cat===courbeSel;
+    const budget = ligne ? ligne.budget : budgetTotal;
+    const couleur = ligne ? ligne.couleur : '#409CFF';
+    const cur = cumul(mois, J, filtre, jourC);
+    const prev = cumul(pCle, PJ, filtre, Math.min(PJ, J));
+    const totalC = cur.cum[jourC];
+    const proj = (enCours && budget>0) ? previsionFinDeMois(totalC, budget, jourC, J) : null;
+    const ymax = Math.max(budget, totalC, proj ? proj.fin : 0, prev.cum[prev.cum.length-1] || 0, 1) * 1.1;
+    const X = d => gL + (d-1)/(J-1)*(W-gL-gR);
+    const Y = v => gT + (1 - v/ymax)*(H-gT-gB);
+    const pts = (cum,a,b) => { const o=[]; for(let j=a;j<=b;j++) o.push(X(j).toFixed(1)+','+Y(cum[j]).toFixed(1)); return o.join(' '); };
+
+    let svg = '';
+    [0,0.5,1].forEach(f=>{
+      const v = ymax/1.1*f, yy = Y(v).toFixed(1);
+      svg += `<line x1="${gL}" x2="${W-gR}" y1="${yy}" y2="${yy}" class="c-grille"/><text x="${gL-5}" y="${(+yy+3.5)}" class="c-axe" text-anchor="end">${kfmt(v)}</text>`;
+    });
+    [...new Set([1,8,15,22,J])].forEach(d=>{ svg += `<text x="${X(d).toFixed(1)}" y="${H-6}" class="c-axe" text-anchor="middle">${d}</text>`; });
+    if(prev.cum.length>2) svg += `<polyline points="${pts(prev.cum,1,prev.cum.length-1)}" class="c-fantome"/>`;
+    if(budget>0) svg += `<line x1="${gL}" x2="${W-gR}" y1="${Y(budget).toFixed(1)}" y2="${Y(budget).toFixed(1)}" class="c-budget"/><text x="${W-gR}" y="${(Y(budget)-4).toFixed(1)}" class="c-axe c-budget-txt" text-anchor="end">Budget ${kfmt(budget)}</text>`;
+    svg += `<defs><linearGradient id="cdeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${couleur}" stop-opacity=".35"/><stop offset="1" stop-color="${couleur}" stop-opacity="0"/></linearGradient></defs>`;
+    svg += `<polygon points="${X(1).toFixed(1)},${Y(0).toFixed(1)} ${pts(cur.cum,1,jourC)} ${X(jourC).toFixed(1)},${Y(0).toFixed(1)}" fill="url(#cdeg)"/>`;
+    svg += `<polyline points="${pts(cur.cum,1,jourC)}" class="c-ligne" stroke="${couleur}"/>`;
+    const depasse = budget>0 ? cur.cum.findIndex((v,j)=>j>=1 && v>budget) : -1;
+    if(depasse>0) svg += `<polyline points="${pts(cur.cum,Math.max(1,depasse-1),jourC)}" class="c-ligne c-rouge"/>`;
+    if(proj) svg += `<line x1="${X(jourC).toFixed(1)}" y1="${Y(totalC).toFixed(1)}" x2="${X(J).toFixed(1)}" y2="${Y(proj.fin).toFixed(1)}" class="c-proj" stroke="${proj.alerte?'#FF453A':couleur}"/>`;
+    svg += `<line id="cCurseur" class="c-curseur" y1="${gT}" y2="${H-gB}" x1="0" x2="0" style="display:none"/><circle id="cPoint" r="4.5" fill="${couleur}" class="c-point" style="display:none"/>`;
+    svg += `<rect id="cZone" x="${gL}" y="0" width="${W-gL-gR}" height="${H-gB}" fill="transparent"/>`;
+
+    const titre = ligne ? `<b style="color:${ligne.couleur}">${esc(ligne.nom)}</b>` : '<b>Tous les postes</b>';
+    let verdict = '';
+    if(proj) verdict = proj.alerte
+      ? `<span class="c-verdict mauvais">À ce rythme, budget atteint le ${proj.jourAtteint} (fin de mois : ${fmt(proj.fin)} FCFA)</span>`
+      : `<span class="c-verdict bon">À ce rythme : ${fmt(proj.fin)} FCFA en fin de mois, dans le budget</span>`;
+    else if(budget>0 && totalC>budget) verdict = `<span class="c-verdict mauvais">Budget dépassé de ${fmt(totalC-budget)} FCFA</span>`;
+    bloc.innerHTML = `
+      <div class="courbe-tete"><div class="courbe-titre">Cumul des dépenses · ${titre}</div>${courbeSel?'<button type="button" class="lien-discret" id="courbeReset">Tous les postes</button>':''}</div>
+      ${verdict}
+      <div class="courbe-wrap"><svg viewBox="0 0 ${W} ${H}" class="courbe-svg">${svg}</svg><div class="courbe-tip" id="cTip" hidden></div></div>
+      <div class="courbe-leg"><span><i class="l-plein" style="background:${couleur}"></i>Dépensé</span>${proj?'<span><i class="l-tirets" style="border-color:'+(proj.alerte?'#FF453A':couleur)+'"></i>Prévision</span>':''}${budget>0?'<span><i class="l-tirets l-b"></i>Budget</span>':''}<span><i class="l-plein l-f"></i>Mois précédent</span></div>
+      <div class="courbe-aide">${courbeSel?'':'Touche un jour pour le détail · touche un poste ci-dessous pour isoler sa courbe'}</div>`;
+
+    const rs = document.getElementById('courbeReset');
+    if(rs) rs.addEventListener('click', ()=>{ courbeSel = null; tracer(); });
+    document.querySelectorAll('#barresMois .rang').forEach(r=>{
+      r.classList.toggle('actif', r.dataset.id===courbeSel);
+      r.classList.toggle('attenue', !!courbeSel && r.dataset.id!==courbeSel);
+    });
+
+    const zone = document.getElementById('cZone'), curs = document.getElementById('cCurseur'), pt = document.getElementById('cPoint'), tip = document.getElementById('cTip');
+    const svgEl = bloc.querySelector('svg');
+    const montrer = e => {
+      const r = svgEl.getBoundingClientRect();
+      const xv = (e.clientX - r.left)/r.width*W;
+      const d = Math.max(1, Math.min(jourC, Math.round((xv-gL)/(W-gL-gR)*(J-1))+1));
+      curs.setAttribute('x1',X(d)); curs.setAttribute('x2',X(d)); curs.style.display='';
+      pt.setAttribute('cx',X(d)); pt.setAttribute('cy',Y(cur.cum[d])); pt.style.display='';
+      const dj = depensesDuMois(mois).filter(filtre).filter(x=>Number(x.date.slice(8,10))===d);
+      const lib = new Date(y,m-1,d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+      tip.innerHTML = `<div class="tip-date">${lib}</div><div class="tip-cumul">${fmt(cur.cum[d])} FCFA <small>cumulés</small></div>`
+        + (cur.par[d] ? `<div class="tip-jour">+${fmt(cur.par[d])} ce jour</div>` + dj.slice(0,3).map(x=>`<div class="tip-ligne">${esc(x.note||'Dépense')} · ${fmt(x.montant)}</div>`).join('') + (dj.length>3?`<div class="tip-ligne">+${dj.length-3} autre${dj.length-3>1?'s':''}</div>`:'') : '<div class="tip-ligne">Aucune dépense ce jour</div>');
+      tip.hidden = false;
+      const pct = X(d)/W*100;
+      tip.style.left = Math.max(18, Math.min(82, pct)) + '%';
+    };
+    zone.addEventListener('pointermove', montrer);
+    zone.addEventListener('pointerdown', montrer);
+    zone.addEventListener('pointerleave', e=>{ if(e.pointerType==='mouse'){ curs.style.display='none'; pt.style.display='none'; tip.hidden=true; } });
+  }
+
+  document.querySelectorAll('#barresMois .rang').forEach(r=>{
+    r.addEventListener('click', ()=>{ courbeSel = (courbeSel===r.dataset.id) ? null : r.dataset.id; tracer(); });
+  });
+  tracer();
+}
