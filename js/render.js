@@ -282,34 +282,22 @@ function renderGraphiqueMois(){
     .filter(l=>l.total>0)
     .sort((a,b)=>b.total-a.total);
 
-  const segments = lignes.map(l=>
-    `<span class="seg" style="background:${l.couleur}" data-w="${(l.total/totalDepMois*100).toFixed(2)}" title="${l.nom} · ${fmt(l.total)} FCFA"></span>`
-  ).join('');
-
+  const maxT = Math.max(...lignes.map(l=>l.total), 1);
   const rangs = lignes.map((l,i)=>{
-    const pct = Math.round(l.total/totalDepMois*100);
-    const ratio = l.budget > 0 ? l.total/l.budget : 0;
     const depasse = l.budget > 0 && l.total > l.budget;
-    const remplissage = l.budget > 0 ? Math.min(ratio,1)*100 : 100;
-    const detail = l.budget > 0
-      ? (depasse ? `<span class="rang-alerte">+${fmt(l.total-l.budget)} au-dessus du budget</span>`
-                 : `${Math.round(ratio*100)} % du budget · reste ${fmt(l.budget-l.total)}`)
-      : 'Pas de budget défini';
+    const w = l.budget > 0 ? Math.min(l.total/l.budget,1)*100 : l.total/maxT*100;
     return `
     <div class="rang" data-id="${l.id}" style="animation-delay:${i*0.05}s">
       <div class="rang-tete">
         <span class="rang-nom"><span class="dot" style="background:${l.couleur}"></span>${l.nom}</span>
-        <span class="rang-montant">${fmt(l.total)} <small>FCFA</small><span class="rang-pct">${pct}%</span></span>
+        <span class="rang-montant${depasse?' depasse':''}">${fmt(l.total)}</span>
       </div>
-      <div class="rang-piste"><div class="rang-fill${depasse?' depasse':''}" style="background:${l.couleur}" data-w="${remplissage.toFixed(1)}"></div></div>
-      <div class="rang-detail">${detail}</div>
+      <div class="rang-piste"><div class="rang-fill" style="background:${l.couleur}" data-w="${w.toFixed(1)}"></div></div>
     </div>`;
   }).join('');
 
   conteneur.innerHTML = `
     <div class="courbe-bloc" id="courbeBloc"></div>
-    <div class="repart-barre">${segments}</div>
-    <div class="repart-legende">${lignes.length} poste${lignes.length>1?'s':''} · plus gros : <b style="color:${lignes[0].couleur}">${lignes[0].nom}</b> (${Math.round(lignes[0].total/totalDepMois*100)} %)</div>
     <div class="rangs">${rangs}</div>`;
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
@@ -425,7 +413,7 @@ function initCourbe(mois, lignes, budgetTotal){
   const pY = m===1 ? y-1 : y, pM = m===1 ? 12 : m-1;
   const pCle = pY+'-'+String(pM).padStart(2,'0');
   const PJ = new Date(pY,pM,0).getDate();
-  const W=420, H=210, gL=34, gR=8, gT=10, gB=22;
+  const W=420, H=170, gL=6, gR=6, gT=16, gB=20;
 
   function cumul(cle, nbJours, filtre, jusqua){
     const par = Array(nbJours+1).fill(0);
@@ -440,43 +428,33 @@ function initCourbe(mois, lignes, budgetTotal){
     const budget = ligne ? ligne.budget : budgetTotal;
     const couleur = ligne ? ligne.couleur : '#409CFF';
     const cur = cumul(mois, J, filtre, jourC);
-    const prev = cumul(pCle, PJ, filtre, Math.min(PJ, J));
     const totalC = cur.cum[jourC];
     const proj = (enCours && budget>0) ? previsionFinDeMois(totalC, budget, jourC, J) : null;
-    const ymax = Math.max(budget, totalC, proj ? proj.fin : 0, prev.cum[prev.cum.length-1] || 0, 1) * 1.1;
+    const ymax = Math.max(budget, totalC, proj ? proj.fin : 0, 1) * 1.1;
     const X = d => gL + (d-1)/(J-1)*(W-gL-gR);
     const Y = v => gT + (1 - v/ymax)*(H-gT-gB);
     const pts = (cum,a,b) => { const o=[]; for(let j=a;j<=b;j++) o.push(X(j).toFixed(1)+','+Y(cum[j]).toFixed(1)); return o.join(' '); };
 
-    let svg = '';
-    [0,0.5,1].forEach(f=>{
-      const v = ymax/1.1*f, yy = Y(v).toFixed(1);
-      svg += `<line x1="${gL}" x2="${W-gR}" y1="${yy}" y2="${yy}" class="c-grille"/><text x="${gL-5}" y="${(+yy+3.5)}" class="c-axe" text-anchor="end">${kfmt(v)}</text>`;
-    });
-    [...new Set([1,8,15,22,J])].forEach(d=>{ svg += `<text x="${X(d).toFixed(1)}" y="${H-6}" class="c-axe" text-anchor="middle">${d}</text>`; });
-    if(prev.cum.length>2) svg += `<polyline points="${pts(prev.cum,1,prev.cum.length-1)}" class="c-fantome"/>`;
-    if(budget>0) svg += `<line x1="${gL}" x2="${W-gR}" y1="${Y(budget).toFixed(1)}" y2="${Y(budget).toFixed(1)}" class="c-budget"/><text x="${W-gR}" y="${(Y(budget)-4).toFixed(1)}" class="c-axe c-budget-txt" text-anchor="end">Budget ${kfmt(budget)}</text>`;
-    svg += `<defs><linearGradient id="cdeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${couleur}" stop-opacity=".35"/><stop offset="1" stop-color="${couleur}" stop-opacity="0"/></linearGradient></defs>`;
+    let svg = `<defs><linearGradient id="cdeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${couleur}" stop-opacity=".28"/><stop offset="1" stop-color="${couleur}" stop-opacity="0"/></linearGradient></defs>`;
+    [1,J].forEach(d=>{ svg += `<text x="${X(d).toFixed(1)}" y="${H-4}" class="c-axe" text-anchor="${d===1?'start':'end'}">${d===1?'1':J}</text>`; });
+    if(budget>0) svg += `<line x1="${gL}" x2="${W-gR}" y1="${Y(budget).toFixed(1)}" y2="${Y(budget).toFixed(1)}" class="c-budget"/><text x="${gL}" y="${(Y(budget)-5).toFixed(1)}" class="c-axe">Budget ${kfmt(budget)}</text>`;
     svg += `<polygon points="${X(1).toFixed(1)},${Y(0).toFixed(1)} ${pts(cur.cum,1,jourC)} ${X(jourC).toFixed(1)},${Y(0).toFixed(1)}" fill="url(#cdeg)"/>`;
     svg += `<polyline points="${pts(cur.cum,1,jourC)}" class="c-ligne" stroke="${couleur}"/>`;
     const depasse = budget>0 ? cur.cum.findIndex((v,j)=>j>=1 && v>budget) : -1;
     if(depasse>0) svg += `<polyline points="${pts(cur.cum,Math.max(1,depasse-1),jourC)}" class="c-ligne c-rouge"/>`;
     if(proj) svg += `<line x1="${X(jourC).toFixed(1)}" y1="${Y(totalC).toFixed(1)}" x2="${X(J).toFixed(1)}" y2="${Y(proj.fin).toFixed(1)}" class="c-proj" stroke="${proj.alerte?'#FF453A':couleur}"/>`;
-    svg += `<line id="cCurseur" class="c-curseur" y1="${gT}" y2="${H-gB}" x1="0" x2="0" style="display:none"/><circle id="cPoint" r="4.5" fill="${couleur}" class="c-point" style="display:none"/>`;
-    svg += `<rect id="cZone" x="${gL}" y="0" width="${W-gL-gR}" height="${H-gB}" fill="transparent"/>`;
+    svg += `<line id="cCurseur" class="c-curseur" y1="${gT}" y2="${H-gB}" x1="0" x2="0" style="display:none"/><circle id="cPoint" r="4" fill="${couleur}" class="c-point" style="display:none"/>`;
+    svg += `<rect id="cZone" x="0" y="0" width="${W}" height="${H-gB}" fill="transparent"/>`;
 
-    const titre = ligne ? `<b style="color:${ligne.couleur}">${esc(ligne.nom)}</b>` : '<b>Tous les postes</b>';
     let verdict = '';
     if(proj) verdict = proj.alerte
-      ? `<span class="c-verdict mauvais">À ce rythme, budget atteint le ${proj.jourAtteint} (fin de mois : ${fmt(proj.fin)} FCFA)</span>`
-      : `<span class="c-verdict bon">À ce rythme : ${fmt(proj.fin)} FCFA en fin de mois, dans le budget</span>`;
-    else if(budget>0 && totalC>budget) verdict = `<span class="c-verdict mauvais">Budget dépassé de ${fmt(totalC-budget)} FCFA</span>`;
+      ? `Budget atteint le <b class="mauvais">${proj.jourAtteint}</b> à ce rythme`
+      : `Fin de mois estimée : <b class="bon">${fmt(proj.fin)}</b> FCFA`;
+    else if(budget>0 && totalC>budget) verdict = `Budget dépassé de <b class="mauvais">${fmt(totalC-budget)}</b> FCFA`;
+    const pastille = ligne ? `<button type="button" class="c-pastille" id="courbeReset"><i style="background:${ligne.couleur}"></i>${esc(ligne.nom)}<span>×</span></button>` : '';
     bloc.innerHTML = `
-      <div class="courbe-tete"><div class="courbe-titre">Cumul des dépenses · ${titre}</div>${courbeSel?'<button type="button" class="lien-discret" id="courbeReset">Tous les postes</button>':''}</div>
-      ${verdict}
-      <div class="courbe-wrap"><svg viewBox="0 0 ${W} ${H}" class="courbe-svg">${svg}</svg><div class="courbe-tip" id="cTip" hidden></div></div>
-      <div class="courbe-leg"><span><i class="l-plein" style="background:${couleur}"></i>Dépensé</span>${proj?'<span><i class="l-tirets" style="border-color:'+(proj.alerte?'#FF453A':couleur)+'"></i>Prévision</span>':''}${budget>0?'<span><i class="l-tirets l-b"></i>Budget</span>':''}<span><i class="l-plein l-f"></i>Mois précédent</span></div>
-      <div class="courbe-aide">${courbeSel?'':'Touche un jour pour le détail · touche un poste ci-dessous pour isoler sa courbe'}</div>`;
+      <div class="courbe-tete"><div class="c-verdict">${verdict}</div>${pastille}</div>
+      <div class="courbe-wrap"><svg viewBox="0 0 ${W} ${H}" class="courbe-svg">${svg}</svg><div class="courbe-tip" id="cTip" hidden></div></div>`;
 
     const rs = document.getElementById('courbeReset');
     if(rs) rs.addEventListener('click', ()=>{ courbeSel = null; tracer(); });
