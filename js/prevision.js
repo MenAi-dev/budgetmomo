@@ -21,6 +21,7 @@ function fixesDuMois(catId){
   const mois = moisActuel(), aujourdhui = auj();
   const deja = depensesDuMois(mois).filter(d=>d.recId && (!catId || d.cat === catId)).reduce((s,d)=>s+d.montant, 0);
   const aVenir = recurrentes
+    .filter(r=>!estEpargne(CATEGORIES.find(c=>c.id===r.cat))) // une épargne automatique n'entame pas le budget des dépenses
     .filter(r=>(!catId || r.cat === catId) && r.dernierMois < mois && dateRecurrence(mois, r.jour) > aujourdhui)
     .map(r=>({ jour: Number(dateRecurrence(mois, r.jour).slice(8, 10)), montant: r.montant }));
   return { deja, aVenir, totalAVenir: aVenir.reduce((s,f)=>s+f.montant, 0) };
@@ -33,7 +34,7 @@ function etatBudget(dep, budget, jour, joursMois, fixes){
   if(!(budget > 0)) return { cle:'sain', message:'Définis un budget pour suivre ton mois.' };
   const deja = fixes ? fixes.deja : 0, aVenir = fixes ? fixes.totalAVenir : 0;
   const reste = budget - dep;
-  if(reste < 0) return { cle:'depasse', message:'Budget dépassé de ' + fmt(-reste) + ' FCFA. Cet excédent sera pris sur ton épargne.' };
+  if(reste < 0) return { cle:'depasse', message:'Budget dépassé de ' + fmt(-reste) + ' FCFA. Si ton argent en poche ne suffit plus, la différence sera prise sur ton épargne.' };
   const libre = reste - aVenir; // ce qui reste vraiment, une fois les récurrentes à venir mises de côté
   if(libre < 0) return { cle:'alerte', message:'Les dépenses récurrentes à venir (' + fmt(aVenir) + ' FCFA) dépasseront ton budget de ' + fmt(-libre) + ' FCFA.' };
   const joursRestants = Math.max(1, joursMois - jour + 1);

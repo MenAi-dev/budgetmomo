@@ -1,0 +1,101 @@
+/* ==========================================================================
+   Style « Verre » (glassmorphisme) — 3e choix dans les Réglages, à côté de One UI et Apple.
+   Chargé en dernier, ACTIVÉ SEULEMENT si ce style est choisi (<link id="cssVerre" disabled>,
+   piloté par js/verrou-precoce.js puis js/reglages.js). Il se pose sur css/oneui.css (mêmes formes).
+   Principe : un fond de couleurs douces et floues, et des surfaces en verre dépoli par-dessus
+   (transparence + flou + fin liseré clair + reflet en haut).
+   ========================================================================== */
+
+:root{
+  --noir:#0A0D18;                         /* base sous les couleurs */
+  --noir-2:rgba(255,255,255,0.07);        /* verre */
+  --noir-3:rgba(255,255,255,0.11);        /* verre plus dense (champs, boutons) */
+  --blanc:#F4F6FB;
+  --gris:rgba(244,246,251,0.64);
+  --gris-2:rgba(244,246,251,0.8);
+  --ligne:rgba(255,255,255,0.10);
+  --piste:rgba(255,255,255,0.14);
+  --verre-bord:rgba(255,255,255,0.16);
+  --verre-reflet:rgba(255,255,255,0.14);
+  --verre-ombre:0 10px 34px rgba(0,0,0,0.30);
+  --verre-flou:blur(22px) saturate(170%);
+  --ombre:0 10px 34px rgba(0,0,0,0.30);
+  /* Fond : trois taches de couleur floues (couleur principale, épargne, sain) */
+  --maille:
+    radial-gradient(70vmax 60vmax at 0% 0%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 62%),
+    radial-gradient(60vmax 60vmax at 100% 35%, color-mix(in srgb, var(--epargne) 48%, transparent), transparent 60%),
+    radial-gradient(70vmax 55vmax at 25% 100%, color-mix(in srgb, var(--sain) 34%, transparent), transparent 62%);
+}
+:root[data-theme="light"]{
+  --noir:#E9EDF7;
+  --noir-2:rgba(255,255,255,0.52);
+  --noir-3:rgba(255,255,255,0.68);
+  --blanc:#141829;
+  --gris:rgba(20,24,41,0.62);
+  --gris-2:rgba(20,24,41,0.8);
+  --ligne:rgba(20,24,41,0.08);
+  --piste:rgba(20,24,41,0.09);
+  --verre-bord:rgba(255,255,255,0.75);
+  --verre-reflet:rgba(255,255,255,0.9);
+  --verre-ombre:0 10px 30px rgba(40,50,90,0.14);
+  --ombre:0 10px 30px rgba(40,50,90,0.14);
+  --maille:
+    radial-gradient(70vmax 60vmax at 0% 0%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 62%),
+    radial-gradient(60vmax 60vmax at 100% 35%, color-mix(in srgb, var(--epargne) 32%, transparent), transparent 60%),
+    radial-gradient(70vmax 55vmax at 25% 100%, color-mix(in srgb, var(--sain) 26%, transparent), transparent 62%);
+}
+
+/* ---------- Le fond coloré, fixe derrière tout ---------- */
+body{background:var(--noir);}
+body::before{
+  content:''; position:fixed; inset:-10%; z-index:-1; pointer-events:none;
+  background:var(--maille), var(--noir);
+  animation:verreDerive 28s ease-in-out infinite alternate;
+}
+@keyframes verreDerive{
+  from{ transform:translate3d(0, 0, 0) scale(1); }
+  to{ transform:translate3d(-3%, 2%, 0) scale(1.06); }
+}
+
+/* ---------- Surfaces en verre ---------- */
+.resume, .repartition, .entrees-section, .graphique-mois, .historique, .comparatif, .solde-card, .hero,
+.courbe-jours, .carte, .fc-carte, .bloc-pres, .fc-panneau, .modal, .nav, .toast{
+  -webkit-backdrop-filter:var(--verre-flou); backdrop-filter:var(--verre-flou);
+  border:1px solid var(--verre-bord);
+  box-shadow:var(--verre-ombre), inset 0 1px 0 var(--verre-reflet);
+}
+.resume, .repartition, .entrees-section, .graphique-mois, .historique, .comparatif, .solde-card, .hero,
+.courbe-jours, .carte, .fc-carte, .fc-panneau, .modal{background-color:var(--noir-2);}
+.carte:hover{border-color:var(--verre-bord);}
+.carte-ajout{background:color-mix(in srgb, var(--accent) 10%, transparent); -webkit-backdrop-filter:var(--verre-flou); backdrop-filter:var(--verre-flou);}
+.fc-carte:active{background:var(--noir-3);}
+.bloc-pres{background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent 80%), var(--noir-2);}
+
+/* Barre de navigation : verre plus dense pour rester lisible par-dessus le contenu */
+.nav{background:color-mix(in srgb, var(--noir) 38%, transparent); -webkit-backdrop-filter:blur(28px) saturate(180%); backdrop-filter:blur(28px) saturate(180%);}
+:root[data-theme="light"] .nav{background:rgba(255,255,255,0.55);}
+.nav-fond{background:color-mix(in srgb, var(--accent) 24%, transparent); box-shadow:inset 0 1px 0 var(--verre-reflet);}
+
+/* Fenêtres et toasts */
+.overlay, .overlay-conseil{background:rgba(5,8,20,0.32); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+:root[data-theme="light"] .overlay, :root[data-theme="light"] .overlay-conseil{background:rgba(30,40,80,0.12);}
+.modal{background-color:color-mix(in srgb, var(--noir) 40%, transparent);}
+:root[data-theme="light"] .modal{background-color:rgba(255,255,255,0.62);}
+.toast{background:color-mix(in srgb, var(--t) 22%, color-mix(in srgb, var(--noir) 55%, transparent));}
+
+/* Champs et contrôles : verre plus dense */
+.champ input, .champ select, .filtres-histo input, .filtres-histo select, .verrou-boite input, .input-pourcent, .mois-input{
+  background:var(--noir-3); border:1px solid var(--verre-bord);
+}
+.seg, .pastilles, .nav-mois, .objectif, .histo-resume{background:var(--noir-3); border:1px solid var(--verre-bord);}
+.seg-btn[aria-pressed="true"]{box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);}
+.btn-valider, .btn-sauvegarde, .ajout-entree-btn, .lien-global{box-shadow:0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);}
+.modif-btn, .suppr-btn, .fc-btn, .btn-annuler{border:1px solid var(--verre-bord);}
+.barre-globale-fill{box-shadow:0 0 16px color-mix(in srgb, var(--etat, var(--accent)) 55%, transparent);}
+
+/* Écran de bienvenue et écran de verrouillage : le même fond coloré */
+.splash, .ecran-verrou{background:var(--maille), var(--noir);}
+.sp-form input{background:var(--noir-3); border:1px solid var(--verre-bord); -webkit-backdrop-filter:var(--verre-flou); backdrop-filter:var(--verre-flou);}
+.fc-illu{background:var(--noir-3);}
+
+@media (prefers-reduced-motion: reduce){ body::before{animation:none;} }

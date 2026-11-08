@@ -1,11 +1,16 @@
-function remplirSelectCategories(select, valeur){
-  select.innerHTML = CATEGORIES.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
-  if(CATEGORIES.some(c=>c.id===valeur)) select.value = valeur;
+// avecEpargne : propose aussi le poste Épargne (uniquement pour les récurrences : un virement d'épargne chaque mois).
+// Une dépense, elle, ne va jamais dans le poste Épargne.
+function remplirSelectCategories(select, valeur, avecEpargne){
+  const liste = avecEpargne ? CATEGORIES : postesDepenses();
+  select.innerHTML = liste.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}${estEpargne(c) ? ' (mise de côté)' : ''}</option>`).join('');
+  if(liste.some(c=>c.id===valeur)) select.value = valeur;
 }
 function ouvrirModal(catId){
+  const cat = CATEGORIES.find(c=>c.id===catId);
+  if(!cat) return;
+  if(estEpargne(cat)){ ouvrirModalEpargne(); return; } // le poste Épargne se remplit avec une épargne, pas une dépense
   depenseEnEdition = null;
   categoriePourAjout = catId;
-  const cat = CATEGORIES.find(c=>c.id===catId);
   document.getElementById('modalTitre').textContent = 'Ajouter une dépense';
   document.getElementById('modalSub').textContent = cat.nom + ' — budget ' + fmt(cat.budget) + ' FCFA';
   document.getElementById('champCat').hidden = true;
@@ -43,7 +48,7 @@ function fermerModal(){
 // Avertit quand une dépense fait franchir le seuil de 80 % ou le budget d'un poste.
 function verifierAlerte(catId, depAvant){
   const c = CATEGORIES.find(x=>x.id===catId);
-  if(!c) return;
+  if(!c || estEpargne(c)) return;
   const dep = depensePar(catId);
   if(dep <= depAvant) return; // rien n'a augmenté ce mois-ci (ex. modification d'une ancienne dépense)
   if(dep > c.budget){
@@ -95,7 +100,9 @@ async function supprimerCategorie(catId){
   const cat = CATEGORIES.find(c=>c.id===catId);
   if(!cat) return;
   const nbDepenses = depenses.filter(d=>d.cat===catId).length;
-  const message = nbDepenses > 0
+  const message = estEpargne(cat)
+    ? `Supprimer le poste "${cat.nom}" ? Il fixe ton objectif d'épargne du mois. Tes épargnes déjà enregistrées sont conservées.`
+    : nbDepenses > 0
     ? `Supprimer la catégorie "${cat.nom}" ? ${nbDepenses} dépense(s) associée(s) seront aussi supprimées.`
     : `Supprimer la catégorie "${cat.nom}" ?`;
   if(!confirm(message)) return;
@@ -110,7 +117,9 @@ async function supprimerCategorie(catId){
 function ouvrirModalBudget(catId){
   categoriePourBudget = catId;
   const cat = CATEGORIES.find(c=>c.id===catId);
-  document.getElementById('modalBudgetSub').textContent = cat.nom + ' — budget actuel ' + fmt(cat.budget) + ' FCFA';
+  document.getElementById('modalBudgetSub').textContent = estEpargne(cat)
+    ? cat.nom + ' — objectif d\'épargne du mois : ' + fmt(cat.budget) + ' FCFA'
+    : cat.nom + ' — budget actuel ' + fmt(cat.budget) + ' FCFA';
   document.getElementById('inputBudget').value = cat.budget;
   document.getElementById('overlayBudget').classList.add('actif');
   document.getElementById('inputBudget').focus();
@@ -209,6 +218,13 @@ async function validerEpargne(){
   const date = document.getElementById('inputEpargneDate').value || auj();
   const note = document.getElementById('inputEpargneNote').value.trim();
   const e = epargneEnEdition ? epargnes.find(x=>x.id===epargneEnEdition) : null;
+  // On ne peut mettre de côté que l'argent qu'on a : l'épargne sort de la poche.
+  const sit = situation();
+  const dispo = sit.poche + (e ? e.montant : 0);
+  if(sit.suivi && montant > dispo && !confirm(
+    'Ton argent en poche est de ' + fmt(Math.max(0, dispo)) + ' FCFA seulement.\n\n'
+    + 'Mettre ' + fmt(montant) + ' FCFA de côté rendrait ton argent en poche négatif. As-tu oublié d\'enregistrer une entrée d\'argent ?\n\n'
+    + 'Enregistrer quand même cette épargne ?')) return;
   if(e) Object.assign(e, { montant, date, note });
   else epargnes.push({ id: nouvelId(), montant, note, date });
   await sauvegarderTout();
@@ -232,7 +248,7 @@ function ouvrirModalGlobal(){
     return `
     <div class="pourcent-ligne">
       <span class="dot" style="background:${esc(c.couleur)}"></span>
-      <span class="nom">${esc(c.nom)}</span>
+      <span class="nom">${esc(c.nom)}${estEpargne(c) ? ' <small>(à mettre de côté)</small>' : ''}</span>
       <input type="number" class="input-pourcent" data-cat="${esc(c.id)}" min="0" max="100" step="0.1" value="${pct}">
       <span class="pct-symbol">%</span>
     </div>`;
@@ -287,6 +303,8 @@ async function validerGlobal(){
 function ouvrirModalCategorie(){
   document.getElementById('inputCatNom').value = '';
   document.getElementById('inputCatBudget').value = '';
+  document.getElementById('inputCatEpargne').checked = false;
+  document.getElementById('ligneCatEpargne').hidden = !!posteEpargne(); // un seul poste d'épargne
   document.getElementById('overlayCategorie').classList.add('actif');
   document.getElementById('inputCatNom').focus();
 }
@@ -299,7 +317,9 @@ async function validerCategorie(){
   if(!nom){ toast('Donne un nom à la catégorie', 'alerte'); return; }
   if(!budgetValide(budget)){ toast(MSG_MONTANT, 'alerte'); return; }
   const id = 'cat_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  CATEGORIES.push({ id, nom, budget, couleur: couleurAuto(CATEGORIES.length) });
+  const cat = { id, nom, budget, couleur: couleurAuto(CATEGORIES.length) };
+  if(document.getElementById('inputCatEpargne').checked && !posteEpargne()) cat.type = 'epargne';
+  CATEGORIES.push(cat);
   await sauvegarderTout();
   fermerModalCategorie();
   rendre();

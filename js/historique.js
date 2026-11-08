@@ -43,9 +43,9 @@ function changerMoisHisto(delta){
 function majOptionsFiltres(){
   const selCat = document.getElementById('filtreCat');
   if(!selCat) return;
-  if(filtreHisto.cat && !CATEGORIES.some(c=>c.id===filtreHisto.cat)) filtreHisto.cat = '';
+  if(filtreHisto.cat && !postesDepenses().some(c=>c.id===filtreHisto.cat)) filtreHisto.cat = '';
   selCat.innerHTML = '<option value="">Tous les postes</option>'
-    + CATEGORIES.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
+    + postesDepenses().map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
   selCat.value = filtreHisto.cat;
 
   const liste = moisDisponibles();

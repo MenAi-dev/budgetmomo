@@ -108,7 +108,7 @@ function depenseMensuelleRef(){
   depenses.forEach(d=>{ const m = (d.date || '').slice(0, 7); if(m && m < mc) parMois[m] = (parMois[m] || 0) + d.montant; });
   const vals = Object.keys(parMois).sort().slice(-3).map(m=>parMois[m]);
   if(vals.length) return vals.reduce((s, x)=>s + x, 0) / vals.length;
-  return totalBudget() || null; // pas encore de mois complet : on prend le budget
+  return budgetDepenses() || null; // pas encore de mois complet : on prend le budget des dépenses
 }
 const POUR_TOI = {
   0: ()=>{

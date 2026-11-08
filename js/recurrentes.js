@@ -32,7 +32,9 @@ async function appliquerRecurrentes(){
     while(m <= moisFin && garde++ < 24){
       const date = dateRecurrence(m, r.jour);
       if(date > aujourdhui) break;
-      depenses.push({ id: nouvelId(), cat: r.cat, montant: r.montant, note: r.note, date, recId: r.id });
+      // Récurrence sur le poste Épargne = virement d'épargne chaque mois (jamais une dépense)
+      if(estEpargne(CATEGORIES.find(c=>c.id===r.cat))) epargnes.push({ id: nouvelId(), montant: r.montant, note: r.note || 'Épargne automatique', date });
+      else depenses.push({ id: nouvelId(), cat: r.cat, montant: r.montant, note: r.note, date, recId: r.id });
       r.dernierMois = m;
       ajoutees++;
       m = moisDecale(m, 1);
@@ -40,7 +42,7 @@ async function appliquerRecurrentes(){
   });
   if(ajoutees){
     await sauvegarderTout();
-    toast(ajoutees + ' dépense' + (ajoutees > 1 ? 's récurrentes ajoutées' : ' récurrente ajoutée'));
+    toast(ajoutees + ' opération' + (ajoutees > 1 ? 's récurrentes ajoutées' : ' récurrente ajoutée'));
   }
   return ajoutees;
 }
@@ -54,15 +56,15 @@ function renderRecurrentes(){
   }
   const tri = [...recurrentes].sort((a,b)=>a.jour - b.jour);
   corps.innerHTML = tri.map(r=>{
-    const cat = CATEGORIES.find(c=>c.id===r.cat);
+    const cat = CATEGORIES.find(c=>c.id===r.cat), ep = estEpargne(cat);
     return `
-      <div class="ligne-tx">
-        <span class="dot" style="background:${cat ? esc(cat.couleur) : 'var(--gris)'}"></span>
+      <div class="ligne-tx${ep ? ' rec-epargne' : ''}">
+        <span class="dot" style="background:${ep ? 'var(--epargne)' : cat ? esc(cat.couleur) : 'var(--gris)'}"></span>
         <div>
           <div>${esc(cat ? cat.nom : 'Poste supprimé')}${r.note ? ' — ' + esc(r.note) : ''}</div>
-          <div class="meta">le ${r.jour} de chaque mois</div>
+          <div class="meta">le ${r.jour} de chaque mois${ep ? ' · mis de côté' : ''}</div>
         </div>
-        <div class="montant">-${fmt(r.montant)} FCFA</div>
+        <div class="montant">${ep ? '→ ' : '-'}${fmt(r.montant)} FCFA</div>
         <div class="actions-ligne"><button class="edit" data-id="${esc(r.id)}" title="Modifier">✎</button></div>
       </div>`;
   }).join('');
@@ -82,8 +84,8 @@ function majHintRec(){
 function ouvrirModalRec(id){
   const r = id ? recurrentes.find(x=>x.id===id) : null;
   recurrenteEnEdition = r ? r.id : null;
-  remplirSelectCategories(document.getElementById('recCat'), r ? r.cat : (CATEGORIES[0] && CATEGORIES[0].id));
-  document.getElementById('recTitre').textContent = r ? 'Modifier la récurrence' : 'Nouvelle dépense récurrente';
+  remplirSelectCategories(document.getElementById('recCat'), r ? r.cat : (CATEGORIES[0] && CATEGORIES[0].id), true);
+  document.getElementById('recTitre').textContent = r ? 'Modifier la récurrence' : 'Nouvelle récurrence';
   document.getElementById('recMontant').value = r ? r.montant : '';
   document.getElementById('recJour').value = r ? r.jour : '';
   document.getElementById('recNote').value = r ? r.note : '';

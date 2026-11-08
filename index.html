@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="css/oneui.css">
 <link rel="stylesheet" href="css/modules.css">
 <link rel="stylesheet" href="css/apple.css" id="cssApple">
+<link rel="stylesheet" href="css/verre.css" id="cssVerre">
 <script src="js/verrou-precoce.js"></script>
 </head>
 <body>
@@ -89,6 +90,8 @@
   </div>
 
   <div class="panel" data-panel="entrees">
+  <div class="entrees-section bilan-mois" id="bilanMois"></div>
+
   <div class="entrees-section">
     <div class="entrees-head">
       <div>
@@ -108,12 +111,12 @@
     <div class="entrees-head">
       <div>
         <h2>Épargne</h2>
-        <div class="sous">Ce que tu mets de côté — non compté comme une dépense</div>
+        <div class="sous">L'argent que tu mets de côté : il sort de ta poche mais n'est pas une dépense</div>
       </div>
       <button class="ajout-entree-btn" id="btnAjoutEpargne">+ Ajouter une épargne</button>
     </div>
     <div class="entrees-total">
-      <div class="label">Total épargné</div>
+      <div class="label">Épargne disponible</div>
       <div class="valeur" id="totalEpargne">0 <small>FCFA</small></div>
     </div>
     <div class="message-epargne" id="messageEpargne" style="display:none"></div>
@@ -217,8 +220,8 @@
   </div>
 
   <div class="historique" id="blocRecurrentes">
-    <h2>Dépenses récurrentes</h2>
-    <div class="sous">Ajoutées automatiquement chaque mois, sans les ressaisir.</div>
+    <h2>Récurrences</h2>
+    <div class="sous">Dépenses (loyer, forfait…) ou épargne ajoutées automatiquement chaque mois, sans les ressaisir. Choisis le poste Épargne pour une épargne automatique.</div>
     <div id="recBody"></div>
     <div class="donnees-actions">
       <button type="button" class="cat-btn" id="btnAjoutRec">+ Ajouter une récurrence</button>
@@ -247,11 +250,12 @@
     <h2>Apparence</h2>
     <div class="sous">Choisis le style, le thème, la couleur principale et la taille du texte.</div>
     <div class="reglage-titre">Style</div>
-    <div class="seg seg-2" role="group" aria-label="Style de l'interface">
+    <div class="seg" role="group" aria-label="Style de l'interface">
       <button type="button" class="seg-btn" data-pref="style" data-valeur="oneui">One UI</button>
       <button type="button" class="seg-btn" data-pref="style" data-valeur="apple">Apple</button>
+      <button type="button" class="seg-btn" data-pref="style" data-valeur="verre">Verre</button>
     </div>
-    <div class="donnees-aide">« One UI » : l'allure d'un Samsung. « Apple » : l'allure d'un iPhone.</div>
+    <div class="donnees-aide">« One UI » : l'allure d'un Samsung. « Apple » : l'allure d'un iPhone. « Verre » : des cartes en verre dépoli sur un fond de couleurs.</div>
     <div class="reglage-titre">Thème</div>
     <div class="seg" role="group" aria-label="Thème">
       <button type="button" class="seg-btn" data-pref="theme" data-valeur="auto">Auto</button>
@@ -384,7 +388,7 @@
 <div class="overlay" id="overlayGlobal">
   <div class="modal modal-large"><div class="sheet-grabber"></div>
     <h3>Modifier le budget global</h3>
-    <div class="sub">Définis le montant total, puis répartis-le en pourcentage entre tes postes.</div>
+    <div class="sub">Définis le montant total (dépenses + épargne), puis répartis-le en pourcentage entre tes postes. La part du poste Épargne est ton objectif d'épargne du mois.</div>
     <div class="champ">
       <label for="inputGlobalMontant">Budget global (FCFA)</label>
       <input type="number" id="inputGlobalMontant" min="0">
@@ -456,6 +460,10 @@
       <label for="inputCatBudget">Budget (FCFA)</label>
       <input type="number" id="inputCatBudget" placeholder="ex : 5000" min="0">
     </div>
+    <label class="ligne-reglage" for="inputCatEpargne" id="ligneCatEpargne">
+      <span><b>C'est mon poste d'épargne</b><small>Le montant devient ton objectif d'épargne du mois (pas un budget de dépenses)</small></span>
+      <input type="checkbox" id="inputCatEpargne" class="interrupteur" role="switch">
+    </label>
     <div class="modal-actions">
       <button class="btn-annuler" id="btnAnnulerCat">Annuler</button>
       <button class="btn-valider" id="btnValiderCat">Ajouter</button>

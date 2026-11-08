@@ -162,6 +162,37 @@ body.fiche-ouverte{overflow:hidden;}
 @keyframes fCoche{ to{ stroke-dashoffset:0; } }
 .f-lune{fill:var(--vigilance); opacity:.85; transform-box:fill-box; transform-origin:center; animation:fPop .6s .3s cubic-bezier(.3,1.4,.5,1) both;}
 
+/* ---------- Bilan du mois (onglet Argent) : reçu → mis de côté → dépensé → reste ---------- */
+.bilan-mois{padding-top:22px;}
+.bm-titre{font-size:1.05rem; font-weight:700; margin-bottom:10px; text-transform:none;}
+.bm-titre::first-letter{text-transform:uppercase;}
+.bm-ligne{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; border-bottom:1px solid var(--ligne);}
+.bm-lib{font-size:0.92rem;}
+.bm-lib small{display:block; margin-top:2px; font-size:0.76rem; color:var(--gris);}
+.bm-val{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.bm-entree .bm-val{color:var(--sain);}
+.bm-epargne .bm-val{color:var(--epargne);}
+.bm-depense .bm-val{color:var(--alerte);}
+.bm-retrait .bm-val{color:var(--vigilance);}
+.bm-total{border-bottom:none; padding-top:12px;}
+.bm-total .bm-lib{font-weight:700;}
+.bm-total .bm-val{font-size:1.25rem;}
+.bm-total.pos .bm-val{color:var(--blanc);} .bm-total.neg .bm-val{color:var(--alerte);}
+.bm-note{margin-top:2px; font-size:0.8rem; color:var(--vigilance);}
+.bm-global{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
+.bm-global > div{padding:12px 14px; border-radius:16px; background:var(--noir-3);}
+.bm-global small{display:block; font-size:0.75rem; color:var(--gris);}
+.bm-global b{display:block; margin-top:4px; font-size:1.05rem; font-variant-numeric:tabular-nums;}
+.bm-global b.pos{color:var(--sain);} .bm-global b.neg{color:var(--alerte);} .bm-global b.bm-ep{color:var(--epargne);}
+.bm-conseil{margin-top:12px; padding:12px 14px; border-radius:16px; font-size:0.84rem; line-height:1.4;
+  background:color-mix(in srgb, var(--accent) 12%, transparent);}
+
+/* Carte du poste Épargne (objectif du mois) */
+.carte-epargne{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--epargne) 35%, transparent);}
+.carte-epargne .ajout-btn{background:color-mix(in srgb, var(--epargne) 16%, transparent); color:var(--epargne);}
+.tag-alerte.tag-ok{background:color-mix(in srgb, var(--sain) 18%, transparent); color:var(--sain);}
+.pourcent-ligne .nom small{color:var(--gris); font-weight:500;}
+
 /* ---------- Bloc « Découvrir Mon Budget » et vidéo plein écran ---------- */
 .bloc-pres{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 16px; padding:14px 16px; border:none; border-radius:var(--rayon);
   background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 80%), var(--noir-2); color:var(--blanc);

@@ -15,9 +15,10 @@ try{
   var accents = ['bleu','indigo','violet','rose','rouge','orange','vert','menthe','sarcelle','cyan','marron'];
   racine.setAttribute('data-accent', accents.indexOf(accent) >= 0 ? accent : 'bleu');
   if(p.texte === 'grand') racine.setAttribute('data-texte', 'grand');
-  // Style : One UI par défaut ; « Apple » active la couche css/apple.css par-dessus
-  var style = p.style === 'apple' ? 'apple' : 'oneui';
+  // Style : One UI par défaut ; « Apple » active css/apple.css, « Verre » active css/verre.css (par-dessus One UI)
+  var style = (p.style === 'apple' || p.style === 'verre') ? p.style : 'oneui';
   racine.setAttribute('data-style', style);
-  var feuille = document.getElementById('cssApple');
-  if(feuille) feuille.disabled = style !== 'apple';
+  var fApple = document.getElementById('cssApple'), fVerre = document.getElementById('cssVerre');
+  if(fApple) fApple.disabled = style !== 'apple';
+  if(fVerre) fVerre.disabled = style !== 'verre';
 }catch(e){}

@@ -64,7 +64,7 @@ function rendreCourbeJours(){
   cjDonnees = jours;
   const somme = jours.reduce((s, x)=>s + x.v, 0);
   const ctx = contexteMois();
-  const parJourBudget = totalBudget() / ctx.joursMois;
+  const parJourBudget = budgetDepenses() / ctx.joursMois;
   const max = Math.max(1, parJourBudget * 1.15, ...jours.map(x=>x.v)) * 1.05;
   const anime = cjDernierNombre !== null && depenses.length > cjDernierNombre;
   cjDernierNombre = depenses.length;

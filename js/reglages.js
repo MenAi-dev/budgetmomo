@@ -4,7 +4,8 @@
 
 const CLE_PREFS = 'budgetPrefs';
 const THEMES = ['auto', 'clair', 'sombre'];
-const STYLES = ['oneui', 'apple'];
+const STYLES = ['oneui', 'apple', 'verre'];
+const NOMS_STYLES = { oneui:'Style One UI', apple:'Style Apple', verre:'Style Verre' };
 // Couleurs système d'Apple (la valeur exacte, claire ou sombre, est dans css/oneui.css) : [clé, nom, aperçu]
 const COULEURS = [
   ['bleu','Bleu','#0A84FF'], ['indigo','Indigo','#5E5CE6'], ['violet','Violet','#BF5AF2'], ['rose','Rose','#FF375F'],
@@ -15,7 +16,7 @@ const ACCENTS = COULEURS.map(c=>c[0]);
 const TEXTES = ['normal', 'grand'];
 const SEUILS = [70, 80, 90];
 // Barre d'état du téléphone, selon le style et le thème
-const COULEUR_BARRE = { oneui:{ clair:'#F2F3F7', sombre:'#000000' }, apple:{ clair:'#F0F0F4', sombre:'#0C0C0F' } };
+const COULEUR_BARRE = { oneui:{ clair:'#F2F3F7', sombre:'#000000' }, apple:{ clair:'#F0F0F4', sombre:'#0C0C0F' }, verre:{ clair:'#E9EDF7', sombre:'#0A0D18' } };
 
 // Accepte n'importe quoi (fichier de sauvegarde, stockage modifié…) et renvoie des réglages toujours valides.
 function nettoyerPrefs(p){
@@ -53,10 +54,11 @@ function appliquerPrefs(opts){
   const racine = document.documentElement;
   const theme = themeEffectif();
   racine.setAttribute('data-theme', theme === 'clair' ? 'light' : 'dark');
-  // Style : la couche Apple (css/apple.css) se pose sur la couche One UI ; en « One UI », on la retire
+  // Style : la couche Apple (css/apple.css) ou Verre (css/verre.css) se pose sur la couche One UI
   racine.setAttribute('data-style', prefs.style);
-  const feuille = document.getElementById('cssApple');
-  if(feuille) feuille.disabled = prefs.style !== 'apple';
+  const fApple = document.getElementById('cssApple'), fVerre = document.getElementById('cssVerre');
+  if(fApple) fApple.disabled = prefs.style !== 'apple';
+  if(fVerre) fVerre.disabled = prefs.style !== 'verre';
   racine.setAttribute('data-accent', prefs.accent);
   const nomCouleur = COULEURS.find(c=>c[0] === prefs.accent);
   const elNom = document.getElementById('couleurNom');
@@ -94,7 +96,7 @@ document.querySelectorAll('[data-pref]').forEach(b=>{
     if(cle === 'style'){
       // Léger fondu pendant le changement de style
       document.body.classList.remove('change-style'); void document.body.offsetWidth; document.body.classList.add('change-style');
-      toast(prefs.style === 'apple' ? 'Style Apple' : 'Style One UI', 'info');
+      toast(NOMS_STYLES[prefs.style], 'info');
     }
     appliquerPrefs({ redessiner: cle === 'seuil' || cle === 'style' });
   });

@@ -1,31 +1,56 @@
 // Dépenses d'un poste sur un mois (par défaut : le mois en cours).
+// Pour le poste Épargne, c'est l'argent mis de côté ce mois-là (il n'a jamais de dépenses).
 function depensePar(catId, mois){
-  return depensesDuMois(mois || moisActuel()).filter(d=>d.cat===catId).reduce((s,d)=>s+d.montant,0);
+  const m = mois || moisActuel();
+  if(estEpargne(CATEGORIES.find(c=>c.id===catId))) return epargneDuMois(m);
+  return depensesDuMois(m).filter(d=>d.cat===catId).reduce((s,d)=>s+d.montant,0);
 }
+const sommeDuMois = (liste, mois) => liste.filter(x=>(x.date || '').startsWith(mois)).reduce((s,x)=>s+x.montant, 0);
+const epargneDuMois = mois => sommeDuMois(epargnes, mois || moisActuel());
+const entreesDuMois = mois => sommeDuMois(entrees, mois || moisActuel());
 
-// Situation globale : l'épargne est retranchée des entrées, et un dépassement du budget du mois est pris sur l'épargne.
+// Budget des dépenses et objectif d'épargne d'un budget figé (historique). Les anciens instantanés n'ont pas de type :
+// le poste d'identifiant « epargne » y est reconnu (voir nettoyerHistorique).
+const budgetDepensesFige = h => h.categories.filter(c=>!estEpargne(c)).reduce((s,c)=>s+c.budget, 0);
+const objectifEpargneFige = h => { const p = h.categories.find(estEpargne); return p ? p.budget : 0; };
+
+// ---------- Situation de l'argent, calculée dans l'ordre des dates ----------
+// On rejoue tous les mouvements, du plus ancien au plus récent (le même jour : entrées, puis épargnes, puis dépenses) :
+//   entrée  → l'argent arrive en poche
+//   épargne → il passe de la poche à l'épargne
+//   dépense → il sort de la poche ; si la poche ne suffit pas, le manque est RETIRÉ de l'épargne (s'il y en a).
+// Un dépassement de budget ne touche donc l'épargne que s'il manque vraiment de l'argent en poche.
+// Sans aucune entrée enregistrée, l'argent en poche n'est pas suivi : l'épargne n'est jamais retirée automatiquement.
 function situation(){
   const entreesTot = entrees.reduce((s,e)=>s+e.montant,0);
   const epargneBrute = epargnes.reduce((s,e)=>s+e.montant,0);
   const depTous = depenses.reduce((s,d)=>s+d.montant,0);
-  const mc = moisActuel();
-  const depMois = depensesDuMois(mc).reduce((s,d)=>s+d.montant,0);
-  // Dépassement cumulé : chaque mois (jusqu'au mois en cours) dépassant son budget est pris sur l'épargne, définitivement.
-  const mois = [...new Set(depenses.map(d=>(d.date||'').slice(0,7)).filter(m=>/^\d{4}-\d{2}$/.test(m) && m<=mc))];
-  let depassementTotal = 0, depassementMois = 0;
-  mois.forEach(m=>{
-    const fige = m < mc ? historiqueBudgets.find(h=>h.mois===m) : null; // mois en cours : budget actuel
-    const budgetM = fige ? fige.total : totalBudget();
-    const dep = depensesDuMois(m).reduce((s,d)=>s+d.montant,0);
-    const exces = Math.max(0, dep - budgetM);
-    depassementTotal += exces;
-    if(m===mc) depassementMois = exces;
+  const suivi = entrees.length > 0;
+  const mouvements = [
+    ...entrees.map(e=>({ date:e.date || '', ordre:0, montant:e.montant })),
+    ...epargnes.map(e=>({ date:e.date || '', ordre:1, montant:e.montant })),
+    ...depenses.map(d=>({ date:d.date || '', ordre:2, montant:d.montant }))
+  ].sort((a,b)=>a.date.localeCompare(b.date) || a.ordre - b.ordre);
+  let poche = 0, epargne = 0, retraits = 0;
+  const retraitsParMois = {};
+  mouvements.forEach(mv=>{
+    if(mv.ordre === 0) poche += mv.montant;
+    else if(mv.ordre === 1){ poche -= mv.montant; epargne += mv.montant; }
+    else {
+      poche -= mv.montant;
+      if(suivi && poche < 0 && epargne > 0){
+        const retrait = Math.min(-poche, epargne);
+        epargne -= retrait; poche += retrait; retraits += retrait;
+        const m = mv.date.slice(0, 7);
+        retraitsParMois[m] = (retraitsParMois[m] || 0) + retrait;
+      }
+    }
   });
-  const prise = Math.min(depassementTotal, epargneBrute);
   return {
-    entreesTot, epargneBrute, depTous, depMois, depassement: depassementTotal, depassementMois, prise,
-    epargneNette: epargneBrute - prise,
-    poche: entreesTot - epargneBrute - depTous + prise
+    entreesTot, epargneBrute, depTous, suivi,
+    retraits, retraitsParMois, prise: retraits,
+    epargneNette: epargne,   // ce qui est réellement dans l'épargne aujourd'hui
+    poche                    // argent disponible (négatif = plus de sorties que d'entrées enregistrées)
   };
 }
 
@@ -36,7 +61,7 @@ const COULEURS_GRAPHIQUE = ['#4C8DFF','#22C3E6','#FF7AB6','#D9A441','#C77DFF','#
 // Répartition des dépenses du mois par poste.
 function renderGraphiqueAccueil(){
   const bloc = document.getElementById('blocRepartition');
-  const lignes = CATEGORIES
+  const lignes = postesDepenses()
     .map((c,i)=>({ nom:c.nom, dep:depensePar(c.id), couleur:COULEURS_GRAPHIQUE[i % COULEURS_GRAPHIQUE.length] }))
     .filter(l=>l.dep>0)
     .sort((a,b)=>b.dep-a.dep);
@@ -63,8 +88,7 @@ function renderGraphiqueAccueil(){
 }
 
 function rendre(){
-  const budgetActuel = totalBudget();
-  const totalDepenseTous = depenses.reduce((s,d)=>s+d.montant,0);            // cumul, pour l'argent en poche
+  const budgetActuel = budgetDepenses(); // le poste Épargne n'est pas de l'argent à dépenser
   const totalDepense = depensesDuMois(moisActuel()).reduce((s,d)=>s+d.montant,0); // mois en cours
   const totalRestant = budgetActuel - totalDepense;
   const ctx = contexteMois();
@@ -72,13 +96,17 @@ function rendre(){
   document.getElementById('labelDepense').textContent = 'Restant en ' + nomMois;
   document.getElementById('titrePostes').textContent = 'Postes · ' + nomMois;
   const sit = situation();
-  const totalEntreesGlobal = sit.entreesTot;
   const solde = sit.poche;
 
   const soldeEl = document.getElementById('soldeDispo');
-  animerValeur(soldeEl, prevSoldeTotal, solde, v => fmt(v)+' FCFA');
-  soldeEl.className = solde >= 0 ? 'pos' : 'neg';
-  prevSoldeTotal = solde;
+  if(sit.suivi){
+    animerValeur(soldeEl, prevSoldeTotal, solde, v => fmt(v)+' FCFA');
+    soldeEl.className = solde >= 0 ? 'pos' : 'neg';
+    prevSoldeTotal = solde;
+  } else {
+    soldeEl.textContent = 'ajoute tes entrées';
+    soldeEl.className = '';
+  }
 
   const totalDepenseEl = document.getElementById('totalDepense');
   const totalRestantEl = document.getElementById('totalRestant');
@@ -105,6 +133,7 @@ function rendre(){
   elPrevG.className = 'prevision-globale alerte';
 
   document.getElementById('grille').innerHTML = CATEGORIES.map((c,i)=>{
+    if(estEpargne(c)) return carteEpargne(c, i);
     const dep = depensePar(c.id);
     const reste = c.budget - dep;
     const pctCat = c.budget ? Math.min(100, (dep/c.budget)*100) : 0;
@@ -143,7 +172,7 @@ function rendre(){
     </button>`;
   document.getElementById('btnTuileCat').addEventListener('click', ouvrirModalCategorie);
   document.querySelectorAll('.ajout-btn').forEach(b=>{
-    b.addEventListener('click', ()=>ouvrirModal(b.dataset.cat));
+    b.addEventListener('click', ()=>b.dataset.epargne ? ouvrirModalEpargne() : ouvrirModal(b.dataset.cat));
   });
   document.querySelectorAll('.modif-btn').forEach(b=>{
     b.addEventListener('click', ()=>ouvrirModalBudget(b.dataset.cat));
@@ -178,6 +207,7 @@ function rendre(){
     });
   }
 
+  renderBilanMois(sit);
   renderEntrees();
   renderEpargne();
   renderGraphiqueMois();
@@ -190,6 +220,34 @@ function rendre(){
   majInfoSauvegarde();
 }
 
+// Carte du poste Épargne : ce n'est pas un budget à dépenser mais l'OBJECTIF du mois, rempli par les épargnes du mois.
+// Ce qui compte pour l'objectif : ce qui a été mis de côté ce mois-ci ET y est resté (moins ce qui a été repris).
+function carteEpargne(c, i){
+  const m = moisActuel(), brut = epargneDuMois(m), repris = situation().retraitsParMois[m] || 0;
+  const fait = Math.max(0, brut - repris);
+  const pct = c.budget ? Math.min(100, fait / c.budget * 100) : 0;
+  const atteint = c.budget > 0 && fait >= c.budget;
+  const reste = Math.max(0, c.budget - fait);
+  const tag = atteint ? '<span class="tag-alerte tag-ok">Atteint</span>' : '';
+  return `
+    <div class="carte carte-epargne" data-cat="${esc(c.id)}" style="animation-delay:${i*0.06}s">
+      <div class="carte-head">
+        <div class="nom">${esc(c.nom)}${tag}</div>
+        <div class="carte-head-droite">
+          <span class="budget">objectif ${fmt(c.budget)} FCFA</span>
+          <button class="modif-btn" data-cat="${esc(c.id)}" title="Modifier l'objectif du mois">✎</button>
+          <button class="suppr-btn" data-cat="${esc(c.id)}" title="Supprimer le poste">🗑</button>
+        </div>
+      </div>
+      <div class="barre"><div class="barre-fill" style="width:${pct}%; background:var(--epargne)"></div></div>
+      <div class="carte-foot">
+        <span class="depense">${repris ? fmt(fait) + ' FCFA gardés · ' + fmt(repris) + ' repris' : fmt(fait) + ' FCFA mis de côté'}</span>
+        <span class="reste" style="color:var(--epargne)">${atteint ? 'Bravo' : 'encore ' + fmt(reste) + ' FCFA'}</span>
+      </div>
+      <button class="ajout-btn" data-cat="${esc(c.id)}" data-epargne="1">+ Mettre de côté</button>
+    </div>`;
+}
+
 function brancherEditions(){
   document.querySelectorAll('#entreesBody .edit').forEach(b=>{
     b.addEventListener('click', ()=>ouvrirEditionEntree(b.dataset.id));
@@ -197,6 +255,42 @@ function brancherEditions(){
   document.querySelectorAll('#epargneBody .edit, #histoEpargneBody .edit').forEach(b=>{
     b.addEventListener('click', ()=>ouvrirEditionEpargne(b.dataset.id));
   });
+}
+
+// Le mois en un coup d'œil (onglet Argent) : reçu → mis de côté → dépensé → ce qui reste du mois,
+// puis la situation globale (argent en poche, épargne) et la comparaison avec ce qui était prévu.
+function renderBilanMois(sit){
+  const zone = document.getElementById('bilanMois');
+  if(!zone) return;
+  const m = moisActuel(), nomMois = nomMoisLong(m);
+  const ent = entreesDuMois(m), epa = epargneDuMois(m), dep = depensesDuMois(m).reduce((s,d)=>s+d.montant,0);
+  const ret = sit.retraitsParMois[m] || 0;
+  const solde = ent - epa - dep + ret; // l'argent repris de l'épargne est revenu dans la poche
+  const objectif = objectifEpargneMois(), budgetDep = budgetDepenses(), prevu = budgetDep + objectif;
+  const ligne = (lib, val, signe, cls, aide) => `
+    <div class="bm-ligne ${cls}">
+      <span class="bm-lib">${lib}${aide ? `<small>${aide}</small>` : ''}</span>
+      <span class="bm-val">${signe}${fmt(val)} FCFA</span>
+    </div>`;
+  let conseil = '';
+  if(!sit.suivi) conseil = "Ajoute tes entrées d'argent (salaire, ventes…) : l'appli pourra alors suivre ton argent en poche.";
+  else if(ent > 0 && prevu > ent) conseil = `Ton plan du mois (${fmt(budgetDep)} de dépenses + ${fmt(objectif)} d'épargne = ${fmt(prevu)} FCFA) dépasse ce que tu as reçu ce mois-ci (${fmt(ent)} FCFA).`;
+  else if(objectif > 0 && epa - ret < objectif && ent > 0) conseil = `Il reste ${fmt(objectif - Math.max(0, epa - ret))} FCFA à mettre de côté pour atteindre ton objectif d'épargne de ${nomMois}.`;
+  zone.innerHTML = `
+    <div class="bm-titre">Ce mois-ci · ${nomMois}</div>
+    ${ligne('Reçu', ent, '+', 'bm-entree')}
+    ${ligne('Mis de côté', epa, '−', 'bm-epargne', objectif ? 'objectif ' + fmt(objectif) + ' FCFA' : '')}
+    ${ligne('Dépensé', dep, '−', 'bm-depense', 'budget ' + fmt(budgetDep) + ' FCFA')}
+    ${ret ? ligne("Repris de l'épargne", ret, '+', 'bm-retrait', "la poche ne suffisait plus pour payer des dépenses") : ''}
+    <div class="bm-ligne bm-total ${solde >= 0 ? 'pos' : 'neg'}">
+      <span class="bm-lib">Reste du mois</span>
+      <span class="bm-val">${solde < 0 ? '−' : ''}${fmt(Math.abs(solde))} FCFA</span>
+    </div>
+    <div class="bm-global">
+      <div><small>Argent en poche</small><b class="${sit.suivi ? (sit.poche >= 0 ? 'pos' : 'neg') : ''}">${sit.suivi ? fmt(sit.poche) + ' FCFA' : '—'}</b></div>
+      <div><small>Épargne disponible</small><b class="bm-ep">${fmt(sit.epargneNette)} FCFA</b></div>
+    </div>
+    ${conseil ? `<div class="bm-conseil">${conseil}</div>` : ''}`;
 }
 
 function renderEntrees(){
@@ -232,8 +326,11 @@ function renderEpargne(){
   const total = sit.epargneNette;
   const msg = document.getElementById('messageEpargne');
   if(msg){
-    msg.textContent = sit.prise > 0 ? 'Budgets dépassés : ' + fmt(sit.prise) + ' FCFA ont été pris sur ton épargne.' : '';
-    msg.style.display = sit.prise > 0 ? '' : 'none';
+    msg.textContent = sit.retraits > 0
+      ? fmt(sit.retraits) + ' FCFA ont été pris sur ton épargne : ton argent en poche ne suffisait plus pour payer certaines dépenses. '
+        + 'Total mis de côté : ' + fmt(sit.epargneBrute) + ' FCFA.'
+      : '';
+    msg.style.display = sit.retraits > 0 ? '' : 'none';
   }
   animerValeur(document.getElementById('totalEpargne'), prevEpargneTotal, total, v=>fmt(v)+' <small>FCFA</small>');
   prevEpargneTotal = total;
@@ -288,7 +385,7 @@ function renderGraphiqueMois(){
     const f = fige && fige.categories.find(x=>x.id===c.id);
     return f ? f.budget : c.budget;
   };
-  const lignes = CATEGORIES
+  const lignes = postesDepenses()
     .map((c,i)=>({
       id:c.id, nom:c.nom, couleur:COULEURS_GRAPHIQUE[i % COULEURS_GRAPHIQUE.length], budget:budgetDe(c),
       total: depMois.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0)
@@ -318,7 +415,7 @@ function renderGraphiqueMois(){
       conteneur.querySelectorAll('[data-w]').forEach(el=>{ el.style.width = el.dataset.w + '%'; });
     });
   });
-  initCourbe(mois, lignes, fige ? fige.total : totalBudget());
+  initCourbe(mois, lignes, fige ? budgetDepensesFige(fige) : budgetDepenses());
 }
 
 function renderGraphiqueRevenu(){

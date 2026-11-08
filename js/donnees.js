@@ -64,7 +64,7 @@ async function exporterJSON(mdp){
     app: 'mon-budget',
     version: 1,
     exporteLe: new Date().toISOString(),
-    donnees: { categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu },
+    donnees: { schema: SCHEMA_DONNEES, categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu },
     preferences: prefs // thème, couleur, texte, prénom, alertes (voir reglages.js)
   };
   const chiffre = typeof mdp === 'string' && mdp !== '';
@@ -104,7 +104,7 @@ function exporterCSV(){
   const lignes = [
     ...depenses.map(d=>({ type:'Dépense', date:d.date, cat:nomCat(d.cat), montant:d.montant, note:d.note })),
     ...entrees.map(e=>({ type:'Entrée',  date:e.date, cat:'', montant:e.montant, note:e.note })),
-    ...epargnes.map(e=>({ type:'Épargne', date:e.date, cat:'', montant:e.montant, note:e.note }))
+    ...epargnes.map(e=>({ type:'Épargne', date:e.date, cat:(posteEpargne() ? posteEpargne().nom : ''), montant:e.montant, note:e.note }))
   ].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
 
   const csv = ['Type;Date;Catégorie;Montant (FCFA);Note']
@@ -125,13 +125,33 @@ const montantOk = n => typeof n === 'number' && isFinite(n) && n >= 0 && n <= 1e
 function nettoyerCategories(liste){
   if(!Array.isArray(liste)) return [];
   const vus = new Set();
+  let epargneVue = false; // un seul poste « Épargne » (objectif du mois)
   return liste.filter(c=> c && RE_ID.test(c.id) && !vus.has(c.id) && vus.add(c.id) && nettoyerTexte(c.nom) && montantOk(c.budget))
-    .map((c,i)=>({
-      id: c.id,
-      nom: nettoyerTexte(c.nom, 40),
-      budget: c.budget,
-      couleur: RE_COULEUR.test(c.couleur) ? c.couleur : couleurAuto(i)
-    }));
+    .map((c,i)=>{
+      const o = { id: c.id, nom: nettoyerTexte(c.nom, 40), budget: c.budget, couleur: RE_COULEUR.test(c.couleur) ? c.couleur : couleurAuto(i) };
+      if(c.type === 'epargne' && !epargneVue){ o.type = 'epargne'; epargneVue = true; }
+      return o;
+    });
+}
+
+// Passage au schéma 2 (une seule fois) : le poste « Épargne » devient l'objectif d'épargne du mois.
+// - il est reconnu par son type, son identifiant « epargne » ou son nom (« Épargne », « Epargne »…) ;
+// - les « dépenses » qui y avaient été notées étaient en réalité de l'argent mis de côté : elles deviennent des épargnes.
+// Renvoie le nombre de lignes déplacées.
+function migrerEpargne(){
+  let poste = CATEGORIES.find(estEpargne);
+  if(!poste) poste = CATEGORIES.find(c=>c.id === 'epargne') || CATEGORIES.find(c=>/^epargne/.test(normaliser(c.nom).trim()));
+  if(!poste) return 0;
+  poste.type = 'epargne';
+  const aDeplacer = depenses.filter(d=>d.cat === poste.id);
+  if(!aDeplacer.length) return 0;
+  const ids = new Set(epargnes.map(e=>e.id));
+  aDeplacer.forEach(d=>{
+    let id = d.id; while(ids.has(id)) id = nouvelId(); ids.add(id);
+    epargnes.push({ id, montant: d.montant, note: d.note || '', date: d.date || '' });
+  });
+  depenses = depenses.filter(d=>d.cat !== poste.id);
+  return aDeplacer.length;
 }
 
 // tolerant = true (chargement normal) : une date absente ou invalide est conservée vide plutôt que de supprimer la ligne.
@@ -172,7 +192,8 @@ function nettoyerHistorique(liste){
   return liste.filter(h=> h && RE_MOIS.test(h.mois) && Array.isArray(h.categories))
     .map(h=>({
       mois: h.mois,
-      categories: nettoyerCategories(h.categories),
+      // anciens instantanés (avant le schéma 2) : le poste « epargne » était un poste comme un autre
+      categories: nettoyerCategories(h.categories.map(c=>(c && c.id === 'epargne' && !h.categories.some(x=>x && x.type === 'epargne')) ? { ...c, type:'epargne' } : c)),
       total: montantOk(h.total) ? h.total : 0,
       valideLe: typeof h.valideLe === 'string' ? h.valideLe.slice(0,40) : '',
       methode: h.methode === 'auto' ? 'auto' : 'manuel'
@@ -234,6 +255,7 @@ async function importerFichier(fichier){
     recurrentes = rec;
     objectifEpargne = obj;
     dernierMoisVu = typeof d.dernierMoisVu === 'string' && RE_MOIS.test(d.dernierMoisVu) ? d.dernierMoisVu : null;
+    if(d.schema !== SCHEMA_DONNEES) migrerEpargne(); // ancienne sauvegarde : même passage que pour les données de l'appareil
     // Les réglages personnels voyagent avec la sauvegarde (une ancienne sauvegarde n'en contient pas : on garde les actuels).
     if(brut.preferences && typeof brut.preferences === 'object'){
       prefs = nettoyerPrefs(brut.preferences);

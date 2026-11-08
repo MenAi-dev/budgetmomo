@@ -1,6 +1,7 @@
 const CLE_STOCKAGE = 'budgetData';
 const CLE_SECOURS_CORROMPU = 'budgetDataCorrompu'; // copie brute de données illisibles, pour ne jamais les perdre
 const CLE_AVANT_IMPORT = 'budgetAvantImport';      // état précédent, conservé avant une restauration
+const CLE_AVANT_MIGRATION = 'budgetAvantMigrationEpargne'; // données telles qu'elles étaient avant le schéma 2
 
 // Applique un objet de données (déjà parsé) à l'état de l'application.
 // Les données lues dans le navigateur passent par les mêmes contrôles qu'une restauration (voir donnees.js) :
@@ -27,7 +28,14 @@ async function chargerTout(){
     try{ data = JSON.parse(brut); }catch(e){ data = null; }
     if(data && typeof data === 'object' && !Array.isArray(data)){
       appliquerDonnees(data);
-      prevRestantTotal = totalBudget();
+      if(data.schema !== SCHEMA_DONNEES){
+        // Copie des données telles qu'elles étaient, puis passage au nouveau fonctionnement de l'épargne (une seule fois)
+        try{ localStorage.setItem(CLE_AVANT_MIGRATION, brut); }catch(e){}
+        const deplacees = migrerEpargne();
+        await sauvegarderTout();
+        if(deplacees) toast(deplacees + ' ligne' + (deplacees > 1 ? 's notées' : ' notée') + ' dans le poste Épargne ' + (deplacees > 1 ? 'sont maintenant comptées' : 'est maintenant comptée') + ' comme épargne, et non plus comme dépense.', 'epargne');
+      }
+      prevRestantTotal = budgetDepenses();
       return;
     }
     // Données illisibles : on en garde une copie brute AVANT de repartir à vide, pour qu'elles restent récupérables.
@@ -60,7 +68,8 @@ async function chargerTout(){
   }catch(e){ entrees = []; }
 
   appliquerDonnees({ categories: CATEGORIES, depenses, entrees }); // même contrôle que les données récentes
-  prevRestantTotal = totalBudget();
+  migrerEpargne();
+  prevRestantTotal = budgetDepenses();
   await sauvegarderTout(); // consolide tout de suite pour les prochaines visites
 }
 
@@ -69,7 +78,7 @@ let alerteStockageMontree = false;
 // Renvoie true si l'écriture a réussi. En cas d'échec (stockage plein, mode privé…), la personne est prévenue.
 async function sauvegarderTout(){
   try{
-    localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu }));
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ schema: SCHEMA_DONNEES, categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu }));
     alerteStockageMontree = false;
     return true;
   }catch(e){

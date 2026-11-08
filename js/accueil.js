@@ -19,7 +19,7 @@ function lancerAccueil(){
   // Une phrase sur le mois en cours : ce qui reste à dépenser, et combien par jour
   function resume(){
     try{
-      const budget = totalBudget();
+      const budget = budgetDepenses(); // l'objectif d'épargne n'est pas de l'argent à dépenser
       if(!budget) return 'Définis ton budget du mois pour commencer.';
       const dep = depensesDuMois(moisActuel()).reduce((t, d)=>t + d.montant, 0);
       const reste = budget - dep;

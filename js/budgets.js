@@ -1,7 +1,7 @@
 function figerBudgetMois(mois, methode){
   const snapshot = {
     mois,
-    categories: CATEGORIES.map(c=>({ id:c.id, nom:c.nom, budget:c.budget, couleur:c.couleur })),
+    categories: CATEGORIES.map(c=>({ id:c.id, nom:c.nom, budget:c.budget, couleur:c.couleur, ...(estEpargne(c) ? { type:'epargne' } : {}) })),
     total: totalBudget(),
     valideLe: new Date().toISOString(),
     methode
@@ -35,9 +35,18 @@ function renderResumeMoisHisto(){
   if(!h){ zone.innerHTML = ''; return; }
   const depMoisListe = depenses.filter(d=>d.date && d.date.startsWith(mois));
   const totalDepMois = depMoisListe.reduce((s,d)=>s+d.montant,0);
-  const ecart = h.total - totalDepMois;
-  const depasse = totalDepMois > h.total;
-  const detail = h.categories.map(c=>{
+  const budgetDep = budgetDepensesFige(h), objectif = objectifEpargneFige(h);
+  const ecart = budgetDep - totalDepMois;
+  const depasse = totalDepMois > budgetDep;
+  const epaMois = epargneDuMois(mois);
+  const posteEp = h.categories.find(estEpargne);
+  const ligneEpargne = posteEp ? `
+      <div class="histo-detail-ligne">
+        <span class="dot" style="background:var(--epargne)"></span>
+        <span class="nom">${esc(posteEp.nom)} <small>(mis de côté / objectif)</small></span>
+        <span class="valeurs"><b>${fmt(epaMois)}</b> / ${fmt(objectif)} FCFA</span>
+      </div>` : '';
+  const detail = h.categories.filter(c=>!estEpargne(c)).map(c=>{
     const depCat = depMoisListe.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0);
     return `
       <div class="histo-detail-ligne">
@@ -49,9 +58,9 @@ function renderResumeMoisHisto(){
   zone.innerHTML = `
     <details class="histo-resume">
       <summary>
-        <span class="histo-resume-txt">Budget prévu : <b>${fmt(h.total)} FCFA</b></span>
+        <span class="histo-resume-txt">Budget dépenses : <b>${fmt(budgetDep)} FCFA</b></span>
         <span class="histo-budget-reel ${depasse?'neg':'pos'}">${depasse ? 'Dépassement de '+fmt(Math.abs(ecart)) : 'Reste '+fmt(ecart)} FCFA</span>
       </summary>
-      <div class="histo-budget-detail">${detail}</div>
+      <div class="histo-budget-detail">${detail}${ligneEpargne}</div>
     </details>`;
 }
