@@ -2,7 +2,7 @@
 // Tous les fichiers d'une version sont mis en cache ensemble ; l'application ne mélange donc jamais
 // d'anciens et de nouveaux fichiers. Quand ce numéro change, la nouvelle version remplace l'ancienne
 // et la page se recharge une fois (voir js/app.js).
-const CACHE_NAME = 'mon-budget-cache-v44';
+const CACHE_NAME = 'mon-budget-cache-v45';
 const URLS_A_METTRE_EN_CACHE = [
   './',
   './index.html',
@@ -34,8 +34,11 @@ const URLS_A_METTRE_EN_CACHE = [
   './js/app.js',
   './fonts/inter-latin.woff2',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/app-icon-192.png',
+  './icons/app-icon-512.png',
+  './icons/app-icon-maskable.png',
+  './icons/apple-touch-icon.png',
+  './icons/logo-mon-budget.png'
 ];
 
 self.addEventListener('install', event => {

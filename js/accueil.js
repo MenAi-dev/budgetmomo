@@ -8,9 +8,9 @@ function lancerAccueil(){
   const s = document.getElementById('splash'), racine = document.documentElement;
   if(!s || !racine.classList.contains('avec-splash')) return;
   const rapide = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Le logo de l'appli (la courbe de icons/icon-192.png), tracé en direct
-  const LOGO = `<div class="sp-logo" aria-hidden="true"><svg viewBox="0 0 64 64">
-      <path class="sp-trait" pathLength="1" d="M9 34h10l5-14 8 23 5-14 3 5h15"/></svg></div>`;
+  // Le logo « Mon Budget » (icons/logo-mon-budget.png) : c'est le logo de l'intérieur de l'appli.
+  // L'icône avec la courbe (icons/app-icon-*.png) est celle de l'écran d'accueil du téléphone.
+  const LOGO = `<img class="sp-logo" src="icons/logo-mon-budget.png" alt="" width="104" height="104">`;
 
   function salutation(){
     const h = new Date().getHours();

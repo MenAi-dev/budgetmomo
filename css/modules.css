@@ -14,12 +14,8 @@ html.avec-splash .splash{display:flex;}
 html.verrouille .splash{display:none !important;}
 html.avec-splash body{overflow:hidden;}
 .sp-boite{width:100%; max-width:360px; text-align:left;}
-/* Couleurs du logo de l'appli (icons/icon-192.png) : vert profond en dégradé, courbe blanche */
-.sp-logo{display:grid; place-items:center; width:76px; height:76px; border-radius:24px;
-  background:linear-gradient(90deg, #173F2B, #1F6A48);
-  box-shadow:0 6px 18px rgba(0,0,0,0.28); animation:spLogo .75s var(--ease) both;}
-.sp-logo svg{width:52px; height:52px; fill:none; stroke:#FFFFFF; stroke-width:4.2; stroke-linecap:round; stroke-linejoin:round;}
-.sp-trait{stroke-dasharray:1; stroke-dashoffset:1; animation:spTrait .9s .4s var(--ease) forwards;}
+/* Logo intérieur « Mon Budget » (icons/logo-mon-budget.png, ses coins arrondis sont dans l'image) */
+.sp-logo{display:block; width:104px; height:104px; filter:drop-shadow(0 6px 14px rgba(0,0,0,0.3)); animation:spLogo .75s var(--ease) both;}
 .sp-salut{margin-top:30px; font-size:1.2rem; font-weight:500; color:var(--gris); animation:spMonte .6s .7s var(--ease) both;}
 .sp-nom{margin-top:2px; font-size:3.1rem; font-weight:700; letter-spacing:-0.04em; line-height:1.05; word-break:break-word;}
 .sp-nom span{display:inline-block; animation:spLettre .6s calc(.9s + var(--i) * 45ms) var(--ease) both;}
@@ -35,8 +31,6 @@ html.avec-splash body{overflow:hidden;}
 .sp-form .btn-valider{width:100%; margin-top:12px; padding:15px; border:none; border-radius:16px; font-weight:600; font-size:1rem; cursor:pointer; animation:spMonte .6s 1.1s var(--ease) both;}
 .sp-form .lien-discret{display:block; margin:12px auto 0; color:var(--gris); animation:spMonte .6s 1.2s var(--ease) both;}
 @keyframes spLogo{ from{ opacity:0; transform:scale(.55) rotate(-10deg); } to{ opacity:1; transform:none; } }
-@keyframes spTrait{ to{ stroke-dashoffset:0; } }
-@keyframes spPop{ from{ transform:scale(0); } }
 @keyframes spMonte{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
 @keyframes spLettre{ from{ opacity:0; transform:translateY(.45em); filter:blur(6px); } to{ opacity:1; transform:none; filter:none; } }
 @keyframes spCharge{ to{ width:100%; } }
@@ -194,5 +188,5 @@ body.change-style .wrap, body.change-style .nav{animation:changeStyle .45s ease 
 @media (prefers-reduced-motion: reduce){
   .splash *, .fc-panneau, .fc-panneau *, .cj-ligne.anime{animation:none !important;}
   .sp-barre i{width:100%;}
-  .sp-trait, .cj-ligne.anime, .f-coche{stroke-dashoffset:0;}
+  .cj-ligne.anime, .f-coche{stroke-dashoffset:0;}
 }
