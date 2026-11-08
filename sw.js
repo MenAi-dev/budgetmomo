@@ -2,7 +2,7 @@
 // Tous les fichiers d'une version sont mis en cache ensemble ; l'application ne mélange donc jamais
 // d'anciens et de nouveaux fichiers. Quand ce numéro change, la nouvelle version remplace l'ancienne
 // et la page se recharge une fois (voir js/app.js).
-const CACHE_NAME = 'mon-budget-cache-v43';
+const CACHE_NAME = 'mon-budget-cache-v44';
 const URLS_A_METTRE_EN_CACHE = [
   './',
   './index.html',

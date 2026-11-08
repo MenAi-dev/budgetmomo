@@ -138,4 +138,4 @@ header p{font-size:0.95rem; color:var(--gris);}
 .pastille[aria-pressed="true"]{box-shadow:0 0 0 3px var(--noir-3), 0 0 0 5px color-mix(in oklab, var(--c) 80%, #5c5c66);}
 
 /* Écran de bienvenue : logo à coins d'icône iOS */
-.sp-logo{border-radius:20px;}
+.sp-logo{border-radius:18px;}

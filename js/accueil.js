@@ -8,10 +8,9 @@ function lancerAccueil(){
   const s = document.getElementById('splash'), racine = document.documentElement;
   if(!s || !racine.classList.contains('avec-splash')) return;
   const rapide = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Le logo de l'appli (la courbe de icons/icon-192.png), tracé en direct
   const LOGO = `<div class="sp-logo" aria-hidden="true"><svg viewBox="0 0 64 64">
-      <path class="sp-trait" pathLength="1" d="M15 24h34a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H19a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4h26"/>
-      <path class="sp-trait sp-trait-2" pathLength="1" d="M53 34H44a4 4 0 0 0 0 8h9"/>
-      <circle class="sp-piece" cx="45" cy="38" r="2.2"/></svg></div>`;
+      <path class="sp-trait" pathLength="1" d="M9 34h10l5-14 8 23 5-14 3 5h15"/></svg></div>`;
 
   function salutation(){
     const h = new Date().getHours();

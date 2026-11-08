@@ -14,13 +14,12 @@ html.avec-splash .splash{display:flex;}
 html.verrouille .splash{display:none !important;}
 html.avec-splash body{overflow:hidden;}
 .sp-boite{width:100%; max-width:360px; text-align:left;}
+/* Couleurs du logo de l'appli (icons/icon-192.png) : vert profond en dégradé, courbe blanche */
 .sp-logo{display:grid; place-items:center; width:76px; height:76px; border-radius:24px;
-  background:linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, var(--noir)));
+  background:linear-gradient(90deg, #173F2B, #1F6A48);
   box-shadow:0 6px 18px rgba(0,0,0,0.28); animation:spLogo .75s var(--ease) both;}
-.sp-logo svg{width:46px; height:46px; fill:none; stroke:var(--sur-accent); stroke-width:4.5; stroke-linecap:round; stroke-linejoin:round;}
-.sp-trait{stroke-dasharray:1; stroke-dashoffset:1; animation:spTrait .7s .4s var(--ease) forwards;}
-.sp-trait-2{animation-delay:.85s;}
-.sp-piece{fill:var(--sur-accent); stroke:none; transform-box:fill-box; transform-origin:center; animation:spPop .4s 1.2s cubic-bezier(.3,1.6,.5,1) both;}
+.sp-logo svg{width:52px; height:52px; fill:none; stroke:#FFFFFF; stroke-width:4.2; stroke-linecap:round; stroke-linejoin:round;}
+.sp-trait{stroke-dasharray:1; stroke-dashoffset:1; animation:spTrait .9s .4s var(--ease) forwards;}
 .sp-salut{margin-top:30px; font-size:1.2rem; font-weight:500; color:var(--gris); animation:spMonte .6s .7s var(--ease) both;}
 .sp-nom{margin-top:2px; font-size:3.1rem; font-weight:700; letter-spacing:-0.04em; line-height:1.05; word-break:break-word;}
 .sp-nom span{display:inline-block; animation:spLettre .6s calc(.9s + var(--i) * 45ms) var(--ease) both;}
