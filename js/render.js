@@ -30,7 +30,8 @@ function situation(){
 }
 
 // Couleurs du graphique d'accueil (volontairement hors bleu, pour bien distinguer les postes).
-const COULEURS_GRAPHIQUE = ['#FF9F0A','#30D158','#BF5AF2','#FF375F','#FFD60A','#AC8E68','#A3E635','#FF6B6B'];
+// Teintes volontairement à l'écart du vert / ambre / corail / violet, qui ont un sens (sain / vigilance / alerte / épargne).
+const COULEURS_GRAPHIQUE = ['#4C8DFF','#22C3E6','#FF7AB6','#D9A441','#C77DFF','#6FA8A0','#FF8A5B','#5B6B8C'];
 
 // Répartition des dépenses du mois par poste.
 function renderGraphiqueAccueil(){
@@ -55,7 +56,7 @@ function renderGraphiqueAccueil(){
   document.getElementById('legende').innerHTML = lignes.map((l,i)=>`
     <div class="leg-ligne" style="animation-delay:${i*0.05}s">
       <span class="dot" style="background:${l.couleur}"></span>
-      <span class="nom">${l.nom}</span>
+      <span class="nom">${esc(l.nom)}</span>
       <span class="montant">${fmt(l.dep)} FCFA</span>
       <span class="pct-val" style="color:var(--blanc)">${Math.round(l.dep/total*100)}%</span>
     </div>`).join('');
@@ -89,11 +90,18 @@ function rendre(){
   prevRestantTotal = totalRestant;
 
   const pctG = budgetActuel ? Math.min(100, (totalDepense/budgetActuel)*100) : 0;
+  const fixesTous = fixesDuMois();
+  const etat = etatBudget(totalDepense, budgetActuel, ctx.jour, ctx.joursMois, fixesTous);
+  document.querySelector('.resume').dataset.etat = etat.cle;
+  document.getElementById('messageEtat').textContent = etat.message;
   document.getElementById('barreGlobale').style.width = pctG+'%';
   document.getElementById('pctGlobal').textContent = Math.round(pctG)+' %';
-  const prevG = previsionFinDeMois(totalDepense, budgetActuel, ctx.jour, ctx.joursMois);
+  const prevG = previsionFinDeMois(totalDepense, budgetActuel, ctx.jour, ctx.joursMois, fixesTous);
   const elPrevG = document.getElementById('previsionGlobale');
-  elPrevG.textContent = (prevG && prevG.alerte) ? 'Au rythme actuel, le budget du mois sera dépassé (~' + fmt(prevG.fin) + ' FCFA)' : '';
+  elPrevG.textContent = (prevG && prevG.alerte)
+    ? 'Au rythme actuel, le budget du mois sera dépassé (~' + fmt(prevG.fin) + ' FCFA'
+      + (fixesTous.totalAVenir > 0 ? ', dont ' + fmt(fixesTous.totalAVenir) + ' de récurrentes à venir' : '') + ')'
+    : '';
   elPrevG.className = 'prevision-globale alerte';
 
   document.getElementById('grille').innerHTML = CATEGORIES.map((c,i)=>{
@@ -102,22 +110,22 @@ function rendre(){
     const pctCat = c.budget ? Math.min(100, (dep/c.budget)*100) : 0;
     const depasse = dep > c.budget;
     const proche = !depasse && c.budget > 0 && dep >= c.budget*SEUIL_ALERTE;
-    const couleurBarre = depasse ? 'var(--rouge)' : proche ? 'var(--orange)' : 'var(--bleu)';
-    const couleurReste = depasse ? 'var(--rouge)' : proche ? 'var(--orange)' : 'var(--bleu-clair)';
-    const prev = previsionFinDeMois(dep, c.budget, ctx.jour, ctx.joursMois);
+    const couleurBarre = depasse ? 'var(--alerte)' : proche ? 'var(--vigilance)' : 'var(--sain)';
+    const couleurReste = couleurBarre;
+    const prev = previsionFinDeMois(dep, c.budget, ctx.jour, ctx.joursMois, fixesDuMois(c.id));
     const prevHtml = (prev && prev.alerte)
       ? '<div class="prevision alerte">Budget atteint vers le ' + prev.jourAtteint + ' ' + nomMois + ' à ce rythme</div>'
       : '';
     const tag = depasse ? '<span class="tag-alerte rouge">Dépassé</span>'
               : proche ? '<span class="tag-alerte">'+Math.round(dep/c.budget*100)+' %</span>' : '';
     return `
-    <div class="carte" data-cat="${c.id}" style="animation-delay:${i*0.06}s">
+    <div class="carte" data-cat="${esc(c.id)}" style="animation-delay:${i*0.06}s">
       <div class="carte-head">
-        <div class="nom">${c.nom}${tag}</div>
+        <div class="nom">${esc(c.nom)}${tag}</div>
         <div class="carte-head-droite">
           <span class="budget">${fmt(c.budget)} FCFA</span>
-          <button class="modif-btn" data-cat="${c.id}" title="Modifier le budget">✎</button>
-          <button class="suppr-btn" data-cat="${c.id}" title="Supprimer la catégorie">🗑</button>
+          <button class="modif-btn" data-cat="${esc(c.id)}" title="Modifier le budget">✎</button>
+          <button class="suppr-btn" data-cat="${esc(c.id)}" title="Supprimer la catégorie">🗑</button>
         </div>
       </div>
       <div class="barre"><div class="barre-fill" style="width:${pctCat}%; background:${couleurBarre}"></div></div>
@@ -126,9 +134,14 @@ function rendre(){
         <span class="reste" style="color:${couleurReste}">${depasse ? '-' : ''}${fmt(Math.abs(reste))} FCFA</span>
       </div>
       ${prevHtml}
-      <button class="ajout-btn" data-cat="${c.id}">+ Ajouter une dépense</button>
+      <button class="ajout-btn" data-cat="${esc(c.id)}">+ Ajouter une dépense</button>
     </div>`;
-  }).join('');
+  }).join('') + `
+    <button type="button" class="carte-ajout" id="btnTuileCat">
+      <span class="carte-ajout-plus" aria-hidden="true">+</span>
+      <span>Nouvelle catégorie</span>
+    </button>`;
+  document.getElementById('btnTuileCat').addEventListener('click', ouvrirModalCategorie);
   document.querySelectorAll('.ajout-btn').forEach(b=>{
     b.addEventListener('click', ()=>ouvrirModal(b.dataset.cat));
   });
@@ -153,11 +166,11 @@ function rendre(){
       <div class="ligne-entree" style="animation-delay:${Math.min(i,8)*0.03}s">
         <span class="dot"></span>
         <div>
-          <div>${e.note ? e.note : 'Épargne'}</div>
+          <div>${esc(e.note || 'Épargne')}</div>
           <div class="meta">${dateStr}</div>
         </div>
         <div class="montant">+${fmt(e.montant)} FCFA</div>
-        <div class="actions-ligne"><button class="edit" data-id="${e.id}" title="Modifier">✎</button><button class="del" data-id="${e.id}" title="Supprimer">×</button></div>
+        <div class="actions-ligne"><button class="edit" data-id="${esc(e.id)}" title="Modifier">✎</button><button class="del" data-id="${esc(e.id)}" title="Supprimer">×</button></div>
       </div>`;
     }).join('');
     document.querySelectorAll('#histoEpargneBody .del').forEach(b=>{
@@ -172,6 +185,7 @@ function rendre(){
   renderGraphiqueEpargne();
   renderObjectif();
   renderGraphiqueAccueil();
+  if(typeof rendreCourbeJours === 'function') rendreCourbeJours();
   brancherEditions();
   majInfoSauvegarde();
 }
@@ -201,11 +215,11 @@ function renderEntrees(){
     <div class="ligne-entree" style="animation-delay:${Math.min(i,8)*0.03}s">
       <span class="dot"></span>
       <div>
-        <div>${e.note ? e.note : 'Entrée'}</div>
+        <div>${esc(e.note || 'Entrée')}</div>
         <div class="meta">${dateStr}</div>
       </div>
       <div class="montant">+${fmt(e.montant)} FCFA</div>
-      <div class="actions-ligne"><button class="edit" data-id="${e.id}" title="Modifier">✎</button><button class="del" data-id="${e.id}" title="Supprimer">×</button></div>
+      <div class="actions-ligne"><button class="edit" data-id="${esc(e.id)}" title="Modifier">✎</button><button class="del" data-id="${esc(e.id)}" title="Supprimer">×</button></div>
     </div>`;
   }).join('');
   document.querySelectorAll('#entreesBody .del').forEach(b=>{
@@ -235,11 +249,11 @@ function renderEpargne(){
     <div class="ligne-entree" style="animation-delay:${Math.min(i,8)*0.03}s">
       <span class="dot"></span>
       <div>
-        <div>${e.note ? e.note : 'Épargne'}</div>
+        <div>${esc(e.note || 'Épargne')}</div>
         <div class="meta">${dateStr}</div>
       </div>
       <div class="montant">+${fmt(e.montant)} FCFA</div>
-      <div class="actions-ligne"><button class="edit" data-id="${e.id}" title="Modifier">✎</button><button class="del" data-id="${e.id}" title="Supprimer">×</button></div>
+      <div class="actions-ligne"><button class="edit" data-id="${esc(e.id)}" title="Modifier">✎</button><button class="del" data-id="${esc(e.id)}" title="Supprimer">×</button></div>
     </div>`;
   }).join('');
   document.querySelectorAll('#epargneBody .del').forEach(b=>{
@@ -287,9 +301,9 @@ function renderGraphiqueMois(){
     const depasse = l.budget > 0 && l.total > l.budget;
     const w = l.budget > 0 ? Math.min(l.total/l.budget,1)*100 : l.total/maxT*100;
     return `
-    <div class="rang" data-id="${l.id}" style="animation-delay:${i*0.05}s">
+    <div class="rang" data-id="${esc(l.id)}" style="animation-delay:${i*0.05}s">
       <div class="rang-tete">
-        <span class="rang-nom"><span class="dot" style="background:${l.couleur}"></span>${l.nom}</span>
+        <span class="rang-nom"><span class="dot" style="background:${l.couleur}"></span>${esc(l.nom)}</span>
         <span class="rang-montant${depasse?' depasse':''}">${fmt(l.total)}</span>
       </div>
       <div class="rang-piste"><div class="rang-fill" style="background:${l.couleur}" data-w="${w.toFixed(1)}"></div></div>
@@ -312,7 +326,7 @@ function renderGraphiqueRevenu(){
   const mois = [];
   for(let i=5;i>=0;i--){
     const d = new Date(maintenant.getFullYear(), maintenant.getMonth()-i, 1);
-    mois.push({ cle: d.toISOString().slice(0,7), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
+    mois.push({ cle: cleMois(d), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
   }
   const totaux = mois.map(m=>({
     ...m,
@@ -356,7 +370,7 @@ function renderGraphiqueEpargne(){
   const mois = [];
   for(let i=5;i>=0;i--){
     const d = new Date(maintenant.getFullYear(), maintenant.getMonth()-i, 1);
-    mois.push({ cle: d.toISOString().slice(0,7), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
+    mois.push({ cle: cleMois(d), label: d.toLocaleDateString('fr-FR',{month:'short'}) });
   }
   const totaux = mois.map(m=>({
     ...m,
@@ -382,7 +396,7 @@ function renderGraphiqueEpargne(){
     return `
     <div class="barre-col">
       <div class="valeur-barre">${m.total ? fmt(m.total) : ''}</div>
-      <div class="barre-visuelle" style="height:0px; background:var(--bleu-clair); transition-delay:${i*0.05}s" data-h="${h}"></div>
+      <div class="barre-visuelle" style="height:0px; background:var(--epargne); transition-delay:${i*0.05}s" data-h="${h}"></div>
       <div class="label-barre">${m.label}</div>
     </div>`;
   }).join('');
@@ -399,7 +413,6 @@ function renderGraphiqueEpargne(){
 // ===== Courbe cumulée du mois (dynamique : toucher un jour / toucher un poste) =====
 let courbeSel = null, courbeMois = null;
 const kfmt = n => n >= 1000 ? (Math.round(n/100)/10).toString().replace('.',',') + ' k' : String(Math.round(n));
-const esc = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function initCourbe(mois, lignes, budgetTotal){
   const bloc = document.getElementById('courbeBloc');
@@ -426,10 +439,10 @@ function initCourbe(mois, lignes, budgetTotal){
     const ligne = courbeSel ? lignes.find(l=>l.id===courbeSel) : null;
     const filtre = d => !courbeSel || d.cat===courbeSel;
     const budget = ligne ? ligne.budget : budgetTotal;
-    const couleur = ligne ? ligne.couleur : '#409CFF';
+    const couleur = ligne ? ligne.couleur : '#4C8DFF';
     const cur = cumul(mois, J, filtre, jourC);
     const totalC = cur.cum[jourC];
-    const proj = (enCours && budget>0) ? previsionFinDeMois(totalC, budget, jourC, J) : null;
+    const proj = (enCours && budget>0) ? previsionFinDeMois(totalC, budget, jourC, J, fixesDuMois(courbeSel)) : null;
     const ymax = Math.max(budget, totalC, proj ? proj.fin : 0, 1) * 1.1;
     const X = d => gL + (d-1)/(J-1)*(W-gL-gR);
     const Y = v => gT + (1 - v/ymax)*(H-gT-gB);
@@ -442,7 +455,7 @@ function initCourbe(mois, lignes, budgetTotal){
     svg += `<polyline points="${pts(cur.cum,1,jourC)}" class="c-ligne" stroke="${couleur}"/>`;
     const depasse = budget>0 ? cur.cum.findIndex((v,j)=>j>=1 && v>budget) : -1;
     if(depasse>0) svg += `<polyline points="${pts(cur.cum,Math.max(1,depasse-1),jourC)}" class="c-ligne c-rouge"/>`;
-    if(proj) svg += `<line x1="${X(jourC).toFixed(1)}" y1="${Y(totalC).toFixed(1)}" x2="${X(J).toFixed(1)}" y2="${Y(proj.fin).toFixed(1)}" class="c-proj" stroke="${proj.alerte?'#FF453A':couleur}"/>`;
+    if(proj) svg += `<line x1="${X(jourC).toFixed(1)}" y1="${Y(totalC).toFixed(1)}" x2="${X(J).toFixed(1)}" y2="${Y(proj.fin).toFixed(1)}" class="c-proj" stroke="${proj.alerte?'#FF6B7A':couleur}"/>`;
     svg += `<line id="cCurseur" class="c-curseur" y1="${gT}" y2="${H-gB}" x1="0" x2="0" style="display:none"/><circle id="cPoint" r="4" fill="${couleur}" class="c-point" style="display:none"/>`;
     svg += `<rect id="cZone" x="0" y="0" width="${W}" height="${H-gB}" fill="transparent"/>`;
 

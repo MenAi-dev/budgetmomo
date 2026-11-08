@@ -1,5 +1,5 @@
 function remplirSelectCategories(select, valeur){
-  select.innerHTML = CATEGORIES.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+  select.innerHTML = CATEGORIES.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
   if(CATEGORIES.some(c=>c.id===valeur)) select.value = valeur;
 }
 function ouvrirModal(catId){
@@ -57,11 +57,12 @@ function verifierAlerte(catId, depAvant){
 
 async function validerAjout(){
   const montant = parseFloat(document.getElementById('inputMontant').value);
-  if(!montant || montant<=0) return;
+  if(!montantValide(montant)){ toast(MSG_MONTANT, 'alerte'); return; }
   const date = document.getElementById('inputDate').value || auj();
   const note = document.getElementById('inputNote').value.trim();
   let catCible;
   let depAvant;
+  const enEdition = !!depenseEnEdition; // fermerModal() remet depenseEnEdition à null avant le message final
   if(depenseEnEdition){
     const d = depenses.find(x=>x.id===depenseEnEdition);
     if(!d){ fermerModal(); return; }
@@ -79,7 +80,8 @@ async function validerAjout(){
   declencherPulse(document.getElementById('totalDepense'));
   const carteEl = document.querySelector(`.carte[data-cat="${catCible}"]`);
   if(carteEl) carteEl.classList.add('flash');
-  verifierAlerte(catCible, depAvant);
+  toast((enEdition ? 'Dépense modifiée' : 'Dépense enregistrée') + ' · −' + fmt(montant) + ' FCFA', 'info');
+  verifierAlerte(catCible, depAvant); // remplace ce message si le seuil de 80 % ou le budget est franchi
 }
 async function supprimerDepense(id){
   const d = depenses.find(x=>x.id===id);
@@ -119,8 +121,9 @@ function fermerModalBudget(){
 }
 async function validerBudget(){
   const montant = parseFloat(document.getElementById('inputBudget').value);
-  if(isNaN(montant) || montant < 0) return;
+  if(!budgetValide(montant)){ toast(MSG_MONTANT, 'alerte'); return; }
   const cat = CATEGORIES.find(c=>c.id===categoriePourBudget);
+  if(!cat){ fermerModalBudget(); return; }
   cat.budget = montant;
   await sauvegarderTout();
   fermerModalBudget();
@@ -155,7 +158,7 @@ function fermerModalEntree(){
 }
 async function validerEntree(){
   const montant = parseFloat(document.getElementById('inputEntreeMontant').value);
-  if(!montant || montant<=0) return;
+  if(!montantValide(montant)){ toast(MSG_MONTANT, 'alerte'); return; }
   const date = document.getElementById('inputEntreeDate').value || auj();
   const note = document.getElementById('inputEntreeNote').value.trim();
   const e = entreeEnEdition ? entrees.find(x=>x.id===entreeEnEdition) : null;
@@ -165,7 +168,7 @@ async function validerEntree(){
   fermerModalEntree();
   rendre();
   declencherPulse(document.getElementById('totalEntrees'));
-}
+  toast('+' + fmt(montant) + ' FCFA reçus', 'entree');}
 async function supprimerEntree(id){
   const e = entrees.find(x=>x.id===id);
   entrees = entrees.filter(x=>x.id!==id);
@@ -202,7 +205,7 @@ function fermerModalEpargne(){
 }
 async function validerEpargne(){
   const montant = parseFloat(document.getElementById('inputEpargneMontant').value);
-  if(!montant || montant<=0) return;
+  if(!montantValide(montant)){ toast(MSG_MONTANT, 'alerte'); return; }
   const date = document.getElementById('inputEpargneDate').value || auj();
   const note = document.getElementById('inputEpargneNote').value.trim();
   const e = epargneEnEdition ? epargnes.find(x=>x.id===epargneEnEdition) : null;
@@ -212,7 +215,7 @@ async function validerEpargne(){
   fermerModalEpargne();
   rendre();
   declencherPulse(document.getElementById('totalEpargne'));
-}
+  toast(fmt(montant) + ' FCFA mis de côté, bravo', 'epargne');}
 async function supprimerEpargne(id){
   const e = epargnes.find(x=>x.id===id);
   epargnes = epargnes.filter(x=>x.id!==id);
@@ -228,9 +231,9 @@ function ouvrirModalGlobal(){
     const pct = budgetActuel ? Math.round((c.budget/budgetActuel)*1000)/10 : 0;
     return `
     <div class="pourcent-ligne">
-      <span class="dot" style="background:${c.couleur}"></span>
-      <span class="nom">${c.nom}</span>
-      <input type="number" class="input-pourcent" data-cat="${c.id}" min="0" max="100" step="0.1" value="${pct}">
+      <span class="dot" style="background:${esc(c.couleur)}"></span>
+      <span class="nom">${esc(c.nom)}</span>
+      <input type="number" class="input-pourcent" data-cat="${esc(c.id)}" min="0" max="100" step="0.1" value="${pct}">
       <span class="pct-symbol">%</span>
     </div>`;
   }).join('');
@@ -253,7 +256,7 @@ function majTotalPourcent(){
 }
 async function validerGlobal(){
   const global = Math.round(parseFloat(document.getElementById('inputGlobalMontant').value));
-  if(isNaN(global) || global < 0) return;
+  if(!budgetValide(global)){ toast(MSG_MONTANT, 'alerte'); return; }
   const inputs = [...document.querySelectorAll('.input-pourcent')];
   const valeurs = inputs.map(i=>({ cat:i.dataset.cat, pct: Math.max(0, parseFloat(i.value)||0) }));
   const sommePct = valeurs.reduce((s,v)=>s+v.pct,0);
@@ -291,9 +294,10 @@ function fermerModalCategorie(){
   document.getElementById('overlayCategorie').classList.remove('actif');
 }
 async function validerCategorie(){
-  const nom = document.getElementById('inputCatNom').value.trim();
+  const nom = document.getElementById('inputCatNom').value.trim().slice(0, 40);
   const budget = parseFloat(document.getElementById('inputCatBudget').value);
-  if(!nom || isNaN(budget) || budget < 0) return;
+  if(!nom){ toast('Donne un nom à la catégorie', 'alerte'); return; }
+  if(!budgetValide(budget)){ toast(MSG_MONTANT, 'alerte'); return; }
   const id = 'cat_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   CATEGORIES.push({ id, nom, budget, couleur: couleurAuto(CATEGORIES.length) });
   await sauvegarderTout();

@@ -45,7 +45,7 @@ function majOptionsFiltres(){
   if(!selCat) return;
   if(filtreHisto.cat && !CATEGORIES.some(c=>c.id===filtreHisto.cat)) filtreHisto.cat = '';
   selCat.innerHTML = '<option value="">Tous les postes</option>'
-    + CATEGORIES.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+    + CATEGORIES.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
   selCat.value = filtreHisto.cat;
 
   const liste = moisDisponibles();
@@ -98,15 +98,15 @@ function renderHistoriqueDepenses(){
     }
     return `
       <div class="ligne-tx" style="animation-delay:${Math.min(i,8)*0.03}s">
-        <span class="dot" style="background:${cat ? cat.couleur : 'var(--gris)'}"></span>
+        <span class="dot" style="background:${cat ? esc(cat.couleur) : 'var(--gris)'}"></span>
         <div>
-          <div>${cat ? cat.nom : 'Poste supprimé'}${d.note ? ' — '+d.note : ''}</div>
+          <div>${esc(cat ? cat.nom : 'Poste supprimé')}${d.note ? ' — ' + esc(d.note) : ''}</div>
           <div class="meta">${dateStr}${d.recId ? ' · ↻ récurrente' : ''}</div>
         </div>
         <div class="montant">-${fmt(d.montant)} FCFA</div>
         <div class="actions-ligne">
-          <button class="edit" data-id="${d.id}" title="Modifier">✎</button>
-          <button class="del" data-id="${d.id}" title="Supprimer">×</button>
+          <button class="edit" data-id="${esc(d.id)}" title="Modifier">✎</button>
+          <button class="del" data-id="${esc(d.id)}" title="Supprimer">×</button>
         </div>
       </div>`;
   }).join('');

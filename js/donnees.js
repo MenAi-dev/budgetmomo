@@ -4,8 +4,14 @@ const CLE_DERNIER_EXPORT = 'budgetDernierExport';
 const SEUIL_RAPPEL_SAUVEGARDE_JOURS = 14;
 const RE_ID = /^[A-Za-z0-9_-]{1,40}$/;
 const RE_COULEUR = /^#[0-9a-fA-F]{3,8}$/;
-const RE_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const RE_MOIS = /^\d{4}-\d{2}$/;
+// Mêmes noms qu'avant (.test), mais vérifient aussi que la date existe vraiment (pas de 2024-99-99, ni de 31 février).
+const RE_DATE = { test: s=>{
+  if(typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [a, m, j] = s.split('-').map(Number);
+  const d = new Date(a, m - 1, j);
+  return d.getFullYear() === a && d.getMonth() === m - 1 && d.getDate() === j;
+}};
+const RE_MOIS = { test: s=> typeof s === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(s) };
 
 function telecharger(nom, contenu, type){
   const blob = new Blob([contenu], { type });
@@ -33,6 +39,7 @@ function joursDepuisSauvegarde(){
 }
 
 function majInfoSauvegarde(){
+  if(typeof majZoneSecours === 'function') majZoneSecours();
   const jours = joursDepuisSauvegarde();
   const el = document.getElementById('infoSauvegarde');
   const rappel = document.getElementById('rappelSauvegarde');
@@ -50,15 +57,25 @@ function majInfoSauvegarde(){
   }
 }
 
-async function exporterJSON(){
+// mdp (facultatif, texte) : le fichier est alors chiffré avec ce mot de passe (voir securite.js).
+// On teste le type : le bouton « Sauvegarder » transmet l'événement de clic comme premier argument.
+async function exporterJSON(mdp){
   const paquet = {
     app: 'mon-budget',
     version: 1,
     exporteLe: new Date().toISOString(),
-    donnees: { categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu }
+    donnees: { categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu },
+    preferences: prefs // thème, couleur, texte, prénom, alertes (voir reglages.js)
   };
-  const nom = 'mon-budget-' + auj() + '.json';
-  const contenu = JSON.stringify(paquet, null, 2);
+  const chiffre = typeof mdp === 'string' && mdp !== '';
+  const nom = 'mon-budget-' + (chiffre ? 'chiffre-' : '') + auj() + '.json';
+  let contenu;
+  try{
+    contenu = chiffre ? JSON.stringify(await chiffrerTexte(JSON.stringify(paquet), mdp), null, 2) : JSON.stringify(paquet, null, 2);
+  }catch(e){
+    toast('Le chiffrement a échoué : sauvegarde annulée.', 'danger');
+    return;
+  }
   // Sur téléphone : feuille de partage (WhatsApp, e-mail, Drive, Fichiers…). Ailleurs : téléchargement.
   try{
     const tactile = window.matchMedia && matchMedia('(pointer: coarse)').matches;
@@ -101,12 +118,14 @@ function exporterCSV(){
 
 // ---------- Import ----------
 
-const nettoyerTexte = (v, max=200) => typeof v === 'string' ? v.replace(/[<>]/g, '').trim().slice(0, max) : '';
+// Le texte est conservé tel quel (« a<b » reste « a<b ») : c'est l'affichage, via esc(), qui le rend inoffensif.
+const nettoyerTexte = (v, max=200) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 const montantOk = n => typeof n === 'number' && isFinite(n) && n >= 0 && n <= 1e12;
 
 function nettoyerCategories(liste){
   if(!Array.isArray(liste)) return [];
-  return liste.filter(c=> c && RE_ID.test(c.id) && nettoyerTexte(c.nom) && montantOk(c.budget))
+  const vus = new Set();
+  return liste.filter(c=> c && RE_ID.test(c.id) && !vus.has(c.id) && vus.add(c.id) && nettoyerTexte(c.nom) && montantOk(c.budget))
     .map((c,i)=>({
       id: c.id,
       nom: nettoyerTexte(c.nom, 40),
@@ -115,12 +134,17 @@ function nettoyerCategories(liste){
     }));
 }
 
-function nettoyerMouvements(liste, avecCat){
+// tolerant = true (chargement normal) : une date absente ou invalide est conservée vide plutôt que de supprimer la ligne.
+function nettoyerMouvements(liste, avecCat, tolerant){
   if(!Array.isArray(liste)) return { ok:[], ignores:0 };
+  const ids = new Set();
   const ok = liste.filter(x=> x && typeof x.montant === 'number' && isFinite(x.montant) && x.montant > 0 && x.montant <= 1e12
-      && RE_DATE.test(x.date) && (!avecCat || RE_ID.test(x.cat)))
+      && (tolerant || RE_DATE.test(x.date)) && (!avecCat || RE_ID.test(x.cat)))
     .map(x=>{
-      const m = { id: RE_ID.test(x.id) ? x.id : nouvelId(), montant: x.montant, note: nettoyerTexte(x.note), date: x.date };
+      let id = RE_ID.test(x.id) && !ids.has(x.id) ? x.id : nouvelId(); // identifiant manquant ou en double : on en génère un
+      while(ids.has(id)) id = nouvelId();
+      ids.add(id);
+      const m = { id, montant: x.montant, note: nettoyerTexte(x.note), date: RE_DATE.test(x.date) ? x.date : '' };
       if(avecCat){
         m.cat = x.cat;
         if(RE_ID.test(x.recId)) m.recId = x.recId;
@@ -163,6 +187,15 @@ async function importerFichier(fichier){
     try{ brut = JSON.parse(await fichier.text()); }
     catch(e){ throw new Error("Ce fichier n'est pas une sauvegarde valide (JSON illisible)."); }
 
+    if(brut && typeof brut === 'object' && brut.chiffre === true){
+      if(!cryptoDispo()) throw new Error("Impossible de déchiffrer ici (il faut une connexion sécurisée, en https).");
+      const mdp = await demanderSecret({ titre:'Sauvegarde chiffrée', sub:'Entre le mot de passe choisi lors de la sauvegarde.', label:'Mot de passe' });
+      if(mdp == null) return;
+      const clair = await dechiffrerPaquet(brut, mdp);
+      try{ brut = JSON.parse(clair); }
+      catch(e){ throw new Error('Le contenu déchiffré est illisible.'); }
+    }
+
     const d = brut && typeof brut === 'object' && brut.donnees ? brut.donnees : brut;
     const cats = nettoyerCategories(d && d.categories);
     if(!cats.length) throw new Error("Ce fichier ne ressemble pas à une sauvegarde de Mon Budget (aucune catégorie trouvée).");
@@ -186,6 +219,13 @@ async function importerFichier(fichier){
     msg += '\n\nTes données actuelles seront remplacées. Si besoin, sauvegarde-les d\'abord.';
     if(!confirm(msg)) return;
 
+    // Copie de l'état actuel, pour pouvoir revenir en arrière après la restauration.
+    let avant = null;
+    try{
+      avant = localStorage.getItem(CLE_STOCKAGE);
+      if(avant) localStorage.setItem(CLE_AVANT_IMPORT, avant);
+    }catch(e){}
+
     CATEGORIES = cats;
     depenses = dep.ok;
     entrees = ent.ok;
@@ -194,11 +234,28 @@ async function importerFichier(fichier){
     recurrentes = rec;
     objectifEpargne = obj;
     dernierMoisVu = typeof d.dernierMoisVu === 'string' && RE_MOIS.test(d.dernierMoisVu) ? d.dernierMoisVu : null;
-    await sauvegarderTout();
+    // Les réglages personnels voyagent avec la sauvegarde (une ancienne sauvegarde n'en contient pas : on garde les actuels).
+    if(brut.preferences && typeof brut.preferences === 'object'){
+      prefs = nettoyerPrefs(brut.preferences);
+      sauverPrefs();
+      appliquerPrefs();
+    }
+    const enregistre = await sauvegarderTout();
     await verifierChangementMois();
     await appliquerRecurrentes();
     rendre();
-    alert('Sauvegarde restaurée.');
+    if(!enregistre){
+      alert("La sauvegarde est chargée mais n'a pas pu être enregistrée sur l'appareil (stockage plein). Ne ferme pas l'application avant d'avoir libéré de l'espace.");
+    } else if(avant){
+      toast('Sauvegarde restaurée', '', { label:'Annuler', fn: async ()=>{
+        try{ localStorage.setItem(CLE_STOCKAGE, avant); }catch(e){}
+        await chargerTout();
+        rendre();
+        toast('Restauration annulée : tes anciennes données sont revenues');
+      }});
+    } else {
+      toast('Sauvegarde restaurée');
+    }
   }catch(e){
     alert(e.message || "L'import a échoué.");
   }finally{

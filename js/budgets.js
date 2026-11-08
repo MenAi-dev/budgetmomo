@@ -41,8 +41,8 @@ function renderResumeMoisHisto(){
     const depCat = depMoisListe.filter(d=>d.cat===c.id).reduce((s,d)=>s+d.montant,0);
     return `
       <div class="histo-detail-ligne">
-        <span class="dot" style="background:${c.couleur}"></span>
-        <span class="nom">${c.nom}</span>
+        <span class="dot" style="background:${esc(c.couleur)}"></span>
+        <span class="nom">${esc(c.nom)}</span>
         <span class="valeurs ${depCat > c.budget ? 'depasse' : ''}"><b>${fmt(depCat)}</b> / ${fmt(c.budget)} FCFA</span>
       </div>`;
   }).join('');

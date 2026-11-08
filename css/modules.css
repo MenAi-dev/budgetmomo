@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Modules repris du kit « Tâches » et adaptés au budget :
+   écran de bienvenue, courbe des dépenses par jour, fiches conseils animées, fondu de changement de style.
+   Chargé après css/oneui.css (et avant css/apple.css) : il n'utilise que les variables communes
+   (--noir, --noir-2, --noir-3, --blanc, --gris, --accent, --sur-accent, --piste, --ligne, --sain, --alerte…).
+   ========================================================================== */
+:root{ --ease:cubic-bezier(.22,1,.36,1); }
+
+/* ---------- Écran de bienvenue ---------- */
+.splash{display:none; position:fixed; inset:0; z-index:300; align-items:center; justify-content:center;
+  padding:calc(env(safe-area-inset-top, 0px) + 32px) 32px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  background:var(--noir); color:var(--blanc); cursor:pointer;}
+html.avec-splash .splash{display:flex;}
+html.verrouille .splash{display:none !important;}
+html.avec-splash body{overflow:hidden;}
+.sp-boite{width:100%; max-width:360px; text-align:left;}
+.sp-logo{display:grid; place-items:center; width:76px; height:76px; border-radius:24px;
+  background:linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, var(--noir)));
+  box-shadow:0 6px 18px rgba(0,0,0,0.28); animation:spLogo .75s var(--ease) both;}
+.sp-logo svg{width:46px; height:46px; fill:none; stroke:var(--sur-accent); stroke-width:4.5; stroke-linecap:round; stroke-linejoin:round;}
+.sp-trait{stroke-dasharray:1; stroke-dashoffset:1; animation:spTrait .7s .4s var(--ease) forwards;}
+.sp-trait-2{animation-delay:.85s;}
+.sp-piece{fill:var(--sur-accent); stroke:none; transform-box:fill-box; transform-origin:center; animation:spPop .4s 1.2s cubic-bezier(.3,1.6,.5,1) both;}
+.sp-salut{margin-top:30px; font-size:1.2rem; font-weight:500; color:var(--gris); animation:spMonte .6s .7s var(--ease) both;}
+.sp-nom{margin-top:2px; font-size:3.1rem; font-weight:700; letter-spacing:-0.04em; line-height:1.05; word-break:break-word;}
+.sp-nom span{display:inline-block; animation:spLettre .6s calc(.9s + var(--i) * 45ms) var(--ease) both;}
+.sp-sous{margin-top:16px; font-size:0.98rem; line-height:1.5; color:var(--gris-2); animation:spMonte .6s 1.45s var(--ease) both;}
+.sp-sous b{color:var(--blanc); font-weight:700;}
+.sp-barre{margin-top:32px; height:3px; border-radius:2px; background:var(--piste); overflow:hidden; animation:spMonte .4s 1.5s var(--ease) both;}
+.sp-barre i{display:block; height:100%; width:0; border-radius:2px; background:var(--accent); animation:spCharge 1.3s 1.6s cubic-bezier(.4,0,.2,1) forwards;}
+.splash.sortie{animation:spSortie .52s var(--ease) forwards; pointer-events:none;}
+.sp-form{cursor:default;}
+.sp-question{margin:4px 0 20px; font-size:1.9rem; font-weight:700; letter-spacing:-0.035em; line-height:1.1; animation:spMonte .6s .85s var(--ease) both;}
+.sp-form input{width:100%; padding:15px 16px; border:none; border-radius:16px; background:var(--noir-2); color:var(--blanc); font:inherit; font-size:1.15rem; animation:spMonte .6s 1s var(--ease) both;}
+.sp-form input:focus{outline:none; box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);}
+.sp-form .btn-valider{width:100%; margin-top:12px; padding:15px; border:none; border-radius:16px; font-weight:600; font-size:1rem; cursor:pointer; animation:spMonte .6s 1.1s var(--ease) both;}
+.sp-form .lien-discret{display:block; margin:12px auto 0; color:var(--gris); animation:spMonte .6s 1.2s var(--ease) both;}
+@keyframes spLogo{ from{ opacity:0; transform:scale(.55) rotate(-10deg); } to{ opacity:1; transform:none; } }
+@keyframes spTrait{ to{ stroke-dashoffset:0; } }
+@keyframes spPop{ from{ transform:scale(0); } }
+@keyframes spMonte{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+@keyframes spLettre{ from{ opacity:0; transform:translateY(.45em); filter:blur(6px); } to{ opacity:1; transform:none; filter:none; } }
+@keyframes spCharge{ to{ width:100%; } }
+@keyframes spSortie{ to{ opacity:0; transform:scale(1.06); } }
+/* Arrivée sur l'application après l'accueil */
+body.entree header, body.entree .panel.actif{animation:entreeApp .5s var(--ease) both;}
+@keyframes entreeApp{ from{ opacity:0; transform:translateY(10px); } }
+
+/* ---------- Courbe des dépenses par jour (Aperçu) ---------- */
+.courbe-jours{margin:16px 0; padding:20px 18px 14px; border-radius:var(--rayon); background:var(--noir-2); touch-action:pan-y;}
+.cj-tete{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;}
+.cj-titre{font-size:0.84rem; font-weight:600; color:var(--gris);}
+.cj-valeur{margin-top:4px; font-size:1.7rem; font-weight:700; letter-spacing:-0.03em; line-height:1.1;}
+.cj-valeur small{font-size:0.8rem; font-weight:600; color:var(--gris);}
+.cj-sous{margin-top:3px; min-height:1.2em; font-size:0.82rem; color:var(--gris); text-transform:none;}
+.cj-sous::first-letter{text-transform:uppercase;}
+.seg.cj-seg{flex:none; width:auto; min-width:112px;}
+.cj-seg .seg-btn{min-height:34px; padding:6px 10px; font-size:0.8rem;}
+.cj-zone{position:relative; cursor:crosshair; user-select:none; -webkit-user-select:none;}
+.cj-zone svg{display:block; overflow:visible;}
+.cj-zone text{font-size:10.5px; fill:var(--gris); font-family:inherit;}
+.cj-zone text.auj{fill:var(--accent); font-weight:700;}
+.cj-grille{stroke:var(--ligne); stroke-width:1;}
+.cj-tiret{stroke-dasharray:4 4; stroke:color-mix(in srgb, var(--vigilance) 60%, transparent);}
+.cj-max{fill:var(--vigilance) !important; font-weight:600;}
+.cj-ligne{fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;}
+.cj-ligne.anime{stroke-dasharray:1; stroke-dashoffset:1; animation:cjTrace 1s var(--ease) forwards;}
+@keyframes cjTrace{ to{ stroke-dashoffset:0; } }
+.cj-aire{animation:cjFondu .6s ease both;}
+@keyframes cjFondu{ from{ opacity:0; } }
+.cj-cher{fill:var(--vigilance); stroke:var(--noir-2); stroke-width:1.5;}
+.cj-guide{stroke:var(--gris); stroke-width:1; stroke-dasharray:3 3;}
+.cj-point{fill:var(--accent); stroke:var(--noir-2); stroke-width:2.5;}
+.cj-auj{transition:opacity .15s;}
+.cj-vide{position:absolute; inset:0 0 24px; display:grid; place-items:center; padding:0 20px; text-align:center; font-size:0.86rem; color:var(--gris);}
+
+/* ---------- Conseils budget : grille de cartes (Analyse) ---------- */
+.conseils-section{margin-top:22px;}
+.conseils{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:12px;}
+.fc-carte{position:relative; display:flex; flex-direction:column; justify-content:space-between; gap:16px; min-height:96px; padding:14px;
+  border:none; border-radius:18px; background:var(--noir-2); color:var(--blanc); text-align:left; cursor:pointer; font:inherit;
+  transition:transform .2s var(--ease), background .2s; animation:apparition .45s var(--ease) both; animation-delay:calc(var(--i) * 40ms);}
+.fc-carte:active{transform:scale(.95); background:var(--noir-3);}
+.fc-carte:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.fc-num{font-size:0.72rem; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums;}
+.fc-carte b{font-size:0.92rem; font-weight:600; letter-spacing:-0.01em; line-height:1.25;}
+@media(max-width:340px){ .conseils{grid-template-columns:repeat(2, 1fr);} }
+@media(max-width:400px){ .fc-carte{padding:12px; min-height:90px;} .fc-carte b{font-size:0.86rem;} }
+@media(min-width:700px){ .conseils{gap:12px;} }
+
+/* ---------- Fiche animée : elle s'ouvre depuis la carte touchée ---------- */
+.overlay-conseil{position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:20px;
+  background:rgba(0,0,0,0.5); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);}
+.overlay-conseil.actif{display:flex; animation:fcFond .3s ease both;}
+.overlay-conseil.ferme{animation:fcFondOut .26s ease both;}
+body.fiche-ouverte{overflow:hidden;}
+.fc-panneau{position:relative; width:100%; max-width:420px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; padding:26px 22px 20px;
+  border-radius:28px; background:var(--noir-2); color:var(--blanc); box-shadow:0 20px 50px rgba(0,0,0,0.4);
+  animation:fcOuvre .5s cubic-bezier(.2,.9,.25,1) both;}
+.overlay-conseil.ferme .fc-panneau{animation:fcFerme .26s ease both;}
+@keyframes fcFond{ from{ opacity:0; } }
+@keyframes fcFondOut{ to{ opacity:0; } }
+@keyframes fcOuvre{ from{ opacity:0; transform:translate(calc(var(--ox, 50vw) - 50vw), calc(var(--oy, 50vh) - 50vh)) scale(.22); border-radius:40px; } }
+@keyframes fcFerme{ to{ opacity:0; transform:scale(.92) translateY(14px); } }
+.fc-btn{display:grid; place-items:center; width:36px; height:36px; padding:0; border:none; border-radius:50%;
+  background:var(--noir-3); color:var(--blanc); font:inherit; font-size:1.3rem; line-height:1; cursor:pointer;}
+.fc-btn:active{transform:scale(.92);}
+.fc-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.fc-fermer{position:absolute; top:14px; right:14px; width:32px; height:32px; font-size:0.85rem; z-index:1;}
+.fc-num-grand{font-size:0.8rem; font-weight:600; color:var(--gris); font-variant-numeric:tabular-nums; animation:fcApp .45s .18s var(--ease) both;}
+.fc-nom{margin:4px 40px 2px 0; font-size:2rem; font-weight:700; letter-spacing:-0.035em; line-height:1.1; animation:fcApp .5s .24s var(--ease) both;}
+.fc-origine{font-size:0.85rem; color:var(--gris); animation:fcApp .5s .3s var(--ease) both;}
+.fc-illu{display:block; width:100%; height:auto; margin:22px 0 18px; padding:14px; border-radius:18px; background:var(--noir-3); overflow:visible; animation:fcApp .5s .36s var(--ease) both;}
+.fc-bloc{padding:14px 0; border-top:1px solid var(--ligne);}
+.fc-bloc.b1{animation:fcApp .5s 1.15s var(--ease) both;}
+.fc-bloc.b2{animation:fcApp .5s 1.4s var(--ease) both;}
+.fc-bloc.b3{animation:fcApp .5s 1.65s var(--ease) both;}
+.fc-etiquette{display:block; font-size:0.78rem; font-weight:700; color:var(--accent);}
+.fc-bloc p{margin:4px 0 0; font-size:1.02rem; line-height:1.42; letter-spacing:-0.01em;}
+.fc-pour-toi{margin-top:4px; padding:14px 16px; border:none; border-radius:16px; background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.fc-pour-toi p{font-size:0.95rem;}
+.fc-pour-toi b{color:var(--accent);}
+.fc-points{display:flex; justify-content:center; gap:6px; margin-top:10px;}
+.fc-points i{width:6px; height:6px; border-radius:50%; background:var(--piste); transition:all .25s;}
+.fc-points i.actif{width:18px; border-radius:3px; background:var(--accent);}
+.fc-nav{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+@keyframes fcApp{ from{ opacity:0; transform:translateY(12px); } }
+.fc-contenu.vers-g{animation:fcG .4s var(--ease) both;}
+.fc-contenu.vers-d{animation:fcD .4s var(--ease) both;}
+@keyframes fcG{ from{ opacity:0; transform:translateX(40px); } }
+@keyframes fcD{ from{ opacity:0; transform:translateX(-40px); } }
+
+/* ---------- Illustrations animées des fiches (SVG 240 × 110) ---------- */
+.fc-illu text{font-size:11px; fill:var(--gris); font-family:inherit;}
+.fc-illu .f-fort{fill:var(--blanc); font-weight:700;}
+.fc-illu .f-blanc{fill:var(--sur-accent); font-weight:600;}
+.f-app{animation:fcApp .4s var(--d, 1.1s) both;}
+.f-plein{fill:var(--accent);}
+.f-env{fill:color-mix(in srgb, var(--accent) 55%, var(--noir-3));}
+.f-ep{fill:var(--epargne);}
+.f-ep2{fill:var(--sain);}
+.f-axe{fill:none; stroke:var(--ligne); stroke-width:1.5;}
+.f-cadre{fill:none; stroke:var(--gris); stroke-opacity:.5; stroke-width:1.5; stroke-dasharray:4 4;}
+.f-seuil{stroke:var(--vigilance); stroke-width:1.5; stroke-dasharray:3 3; animation:fcApp .4s 1.1s both;}
+.f-ligne-g{fill:var(--noir-2);}
+.f-centre{fill:var(--gris);}
+.f-piece{fill:var(--vigilance);}
+.f-trait-fixe{fill:none; stroke:var(--gris); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;}
+/* Mouvements */
+.f-monte{transform-box:fill-box; transform-origin:bottom; animation:fMonte .8s var(--d, .45s) cubic-bezier(.3,.7,.3,1) both;}
+@keyframes fMonte{ from{ transform:scaleY(0); } }
+.f-etire{transform-box:fill-box; transform-origin:left; animation:fEtire 1s var(--d, .45s) cubic-bezier(.3,.7,.3,1) both;}
+@keyframes fEtire{ from{ transform:scaleX(0); } }
+.f-pop{transform-box:fill-box; transform-origin:center; animation:fPop .45s var(--d, .5s) cubic-bezier(.3,1.6,.5,1) both;}
+@keyframes fPop{ from{ transform:scale(0); opacity:0; } }
+.f-glisse{animation:fGlisse .9s .5s cubic-bezier(.5,0,.3,1) both;}
+@keyframes fGlisse{ to{ transform:translateY(46px); } }
+.f-solde{transform-box:fill-box; transform-origin:left; animation:fSolde .7s var(--d, .6s) cubic-bezier(.5,0,.3,1) both;}
+@keyframes fSolde{ to{ transform:scaleX(0); opacity:.2; } }
+.f-boule{fill:var(--sain); transform-box:fill-box; transform-origin:center; animation:fBoule 1.8s .6s ease both;}
+@keyframes fBoule{ 0%{ transform:scale(.4); } 50%{ transform:scale(.7); } 100%{ transform:scale(1.15); } }
+.f-aiguille{stroke:var(--accent); stroke-width:3.5; stroke-linecap:round;}
+.f-tourne{animation:fTourne .8s linear 2;}
+@keyframes fTourne{ to{ transform:rotate(360deg); } }
+.f-estompe{animation:fEstompe .8s 1.4s ease both;}
+@keyframes fEstompe{ to{ opacity:.25; } }
+.f-coche{fill:none; stroke:var(--sur-accent); stroke-width:3.5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:30; stroke-dashoffset:30; animation:fCoche .45s var(--d, .9s) ease forwards;}
+.f-coche-p{stroke:var(--sain);}
+@keyframes fCoche{ to{ stroke-dashoffset:0; } }
+.f-lune{fill:var(--vigilance); opacity:.85; transform-box:fill-box; transform-origin:center; animation:fPop .6s .3s cubic-bezier(.3,1.4,.5,1) both;}
+
+/* ---------- Bloc « Découvrir Mon Budget » et vidéo plein écran ---------- */
+.bloc-pres{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 16px; padding:14px 16px; border:none; border-radius:var(--rayon);
+  background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 80%), var(--noir-2); color:var(--blanc);
+  text-align:left; cursor:pointer; font:inherit; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent); transition:transform .15s var(--ease);}
+.bloc-pres:active{transform:scale(.98);}
+.bloc-pres:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.bloc-pres-ico{display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:14px; background:var(--accent); color:var(--sur-accent);}
+.bloc-pres-ico svg{width:20px; height:20px; fill:currentColor; margin-left:2px;}
+.bloc-pres-txt{flex:1; min-width:0;}
+.bloc-pres-txt b{display:block; font-size:1rem; font-weight:700;}
+.bloc-pres-txt small{display:block; margin-top:2px; font-size:0.8rem; color:var(--gris);}
+.bloc-pres-fleche{font-size:1.4rem; color:var(--gris);}
+.overlay-pres{position:fixed; inset:0; z-index:250; display:none; background:#060608;}
+.overlay-pres.actif{display:block; animation:presIn .4s ease both;}
+@keyframes presIn{ from{ opacity:0; transform:scale(1.03); } }
+.overlay-pres video{width:100%; height:100%; display:block; object-fit:contain; background:#060608;}
+.pres-fermer{position:absolute; top:calc(env(safe-area-inset-top, 0px) + 14px); right:14px; z-index:2; width:40px; height:40px; border:none; border-radius:50%;
+  background:rgba(255,255,255,0.14); color:#fff; font-size:1rem; cursor:pointer; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
+
+/* ---------- Changement de style (One UI <-> Apple) : léger fondu ---------- */
+body.change-style .wrap, body.change-style .nav{animation:changeStyle .45s ease both;}
+@keyframes changeStyle{ from{ opacity:.35; filter:blur(3px); } }
+
+@media (prefers-reduced-motion: reduce){
+  .splash *, .fc-panneau, .fc-panneau *, .cj-ligne.anime{animation:none !important;}
+  .sp-barre i{width:100%;}
+  .sp-trait, .cj-ligne.anime, .f-coche{stroke-dashoffset:0;}
+}

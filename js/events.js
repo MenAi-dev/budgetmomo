@@ -50,14 +50,14 @@ document.getElementById('btnReset').addEventListener('click', async ()=>{
     depenses = [];
     await sauvegarderTout();
     rendre();
-    annulable(sauvegarde.length + ' dépenses supprimées', ()=>{ depenses = sauvegarde; });
+    annulable(sauvegarde.length + ' dépenses supprimées', ()=>{ depenses = sauvegarde.concat(depenses); }); // concat : garde aussi ce qui a été ajouté entre-temps
   }
 });
 
 document.getElementById('moisSelect').value = moisActuel();
 renderGraphiqueMois();
 
-document.getElementById('btnExportJson').addEventListener('click', exporterJSON);
+document.getElementById('btnExportJson').addEventListener('click', ()=>exporterJSON());
 document.getElementById('btnExportCsv').addEventListener('click', exporterCSV);
 document.getElementById('btnImport').addEventListener('click', ()=>document.getElementById('inputImport').click());
 document.getElementById('inputImport').addEventListener('change', e=>importerFichier(e.target.files[0]));
@@ -82,4 +82,4 @@ document.getElementById('btnAnnulerObjectif').addEventListener('click', fermerMo
 document.getElementById('btnValiderObjectif').addEventListener('click', validerObjectif);
 document.getElementById('btnSupprimerObjectif').addEventListener('click', supprimerObjectif);
 document.getElementById('overlayObjectif').addEventListener('click', e=>{ if(e.target.id==='overlayObjectif') fermerModalObjectif(); });
-document.getElementById('btnRappelSauvegarde').addEventListener('click', exporterJSON);
+document.getElementById('btnRappelSauvegarde').addEventListener('click', ()=>exporterJSON());

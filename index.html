@@ -3,23 +3,29 @@
 <head>
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mon Budget</title>
 <link rel="manifest" href="manifest.json">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Mon Budget">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/oneui.css">
+<link rel="stylesheet" href="css/modules.css">
+<link rel="stylesheet" href="css/apple.css" id="cssApple">
+<script src="js/verrou-precoce.js"></script>
 </head>
 <body>
+<div class="splash" id="splash"></div>
 <div class="wrap">
 
   <header>
@@ -27,16 +33,14 @@
       <h1>Mon budget</h1>
       <p>Suivi des dépenses par poste, en FCFA.</p>
     </div>
-    <div class="header-actions">
-      <button class="cat-btn" id="btnAjoutCat">+ Catégorie</button>
-    </div>
   </header>
 
   <nav class="nav" id="nav">
-    <button class="nav-btn actif" data-panel="apercu"><span class="nav-fond"></span>Aperçu</button>
-    <button class="nav-btn" data-panel="entrees"><span class="nav-fond"></span>Argent</button>
-    <button class="nav-btn" data-panel="analyse"><span class="nav-fond"></span>Analyse</button>
-    <button class="nav-btn" data-panel="historique"><span class="nav-fond"></span>Historique</button>
+    <button class="nav-btn actif" data-panel="apercu"><span class="nav-fond"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="nav-txt">Aperçu</span></button>
+    <button class="nav-btn" data-panel="entrees"><span class="nav-fond"></span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="15" r="1.2"/></svg><span class="nav-txt">Argent</span></button>
+    <button class="nav-btn" data-panel="analyse"><span class="nav-fond"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="nav-txt">Analyse</span></button>
+    <button class="nav-btn" data-panel="historique"><span class="nav-fond"></span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="nav-txt">Historique</span></button>
+    <button class="nav-btn" data-panel="reglages"><span class="nav-fond"></span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3h0a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v0a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg><span class="nav-txt">Réglages</span></button>
   </nav>
 
   <div class="panel actif" data-panel="apercu">
@@ -48,6 +52,7 @@
   <div class="resume">
     <div class="label" id="labelDepense">Restant ce mois</div>
     <div class="resume-valeur pos" id="totalRestant">0 <small>FCFA</small></div>
+    <div class="message-etat" id="messageEtat" aria-live="polite"></div>
     <div class="barre-globale"><div class="barre-globale-fill" id="barreGlobale"></div></div>
     <div class="barre-globale-txt">
       <span><b id="totalDepense">0 FCFA</b> dépensés sur <b id="totalBudget">0 FCFA</b></span>
@@ -60,6 +65,8 @@
     </div>
   </div>
 
+  <div class="courbe-jours" id="courbeJours"></div>
+
   <div class="repartition" id="blocRepartition" hidden>
     <div class="donut-holder">
       <div id="donut"></div>
@@ -71,7 +78,13 @@
     <div class="legende-lignes" id="legende"></div>
   </div>
 
-  <h2 class="section-titre" id="titrePostes">Postes</h2>
+  <div class="section-tete">
+    <h2 class="section-titre" id="titrePostes">Postes</h2>
+    <button type="button" class="ajout-cat-btn" id="btnAjoutCat" aria-label="Ajouter une catégorie">
+      <span class="ajout-cat-icone" aria-hidden="true">+</span>
+      <span>Catégorie</span>
+    </button>
+  </div>
   <div class="grille" id="grille"></div>
   </div>
 
@@ -165,6 +178,13 @@
     <div class="barres-mois" id="barresEpargne"></div>
   </div>
 
+  <div class="conseils-section">
+    <div class="section-tete">
+      <h2 class="section-titre">Conseils budget</h2>
+    </div>
+    <div class="conseils" id="conseils"></div>
+  </div>
+
   </div>
 
   <div class="panel" data-panel="historique">
@@ -205,8 +225,68 @@
     </div>
   </div>
 
+  </div>
+
+  <div class="panel" data-panel="reglages">
+  <button class="bloc-pres" type="button" data-pres="ouvrir">
+    <span class="bloc-pres-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+    <span class="bloc-pres-txt"><b>Découvrir Mon Budget</b><small>Vidéo de présentation · 57 s</small></span>
+    <span class="bloc-pres-fleche" aria-hidden="true">›</span>
+  </button>
+
+  <div class="historique" id="blocProfil">
+    <h2>Profil</h2>
+    <div class="sous">Pour que l'application te parle personnellement.</div>
+    <div class="champ">
+      <label for="prefPrenom">Ton prénom</label>
+      <input type="text" id="prefPrenom" maxlength="30" placeholder="ex : Mohamed" autocomplete="given-name">
+    </div>
+  </div>
+
+  <div class="historique" id="blocApparence">
+    <h2>Apparence</h2>
+    <div class="sous">Choisis le style, le thème, la couleur principale et la taille du texte.</div>
+    <div class="reglage-titre">Style</div>
+    <div class="seg seg-2" role="group" aria-label="Style de l'interface">
+      <button type="button" class="seg-btn" data-pref="style" data-valeur="oneui">One UI</button>
+      <button type="button" class="seg-btn" data-pref="style" data-valeur="apple">Apple</button>
+    </div>
+    <div class="donnees-aide">« One UI » : l'allure d'un Samsung. « Apple » : l'allure d'un iPhone.</div>
+    <div class="reglage-titre">Thème</div>
+    <div class="seg" role="group" aria-label="Thème">
+      <button type="button" class="seg-btn" data-pref="theme" data-valeur="auto">Auto</button>
+      <button type="button" class="seg-btn" data-pref="theme" data-valeur="clair">Clair</button>
+      <button type="button" class="seg-btn" data-pref="theme" data-valeur="sombre">Sombre</button>
+    </div>
+    <div class="donnees-aide">« Auto » suit le réglage clair / sombre de ton téléphone.</div>
+    <div class="reglage-titre">Couleur principale</div>
+    <div class="pastilles" id="pastilles" role="group" aria-label="Couleur principale"></div>
+    <div class="couleur-nom" id="couleurNom"></div>
+    <div class="reglage-titre">Taille du texte</div>
+    <div class="seg seg-2" role="group" aria-label="Taille du texte">
+      <button type="button" class="seg-btn" data-pref="texte" data-valeur="normal">Normale</button>
+      <button type="button" class="seg-btn" data-pref="texte" data-valeur="grand">Grande</button>
+    </div>
+  </div>
+
+  <div class="historique" id="blocAlertes">
+    <h2>Alertes</h2>
+    <div class="sous">Quand l'application doit te prévenir.</div>
+    <div class="reglage-titre">Prévenir quand un poste atteint</div>
+    <div class="seg" role="group" aria-label="Seuil d'alerte">
+      <button type="button" class="seg-btn" data-pref="seuil" data-valeur="70">70 %</button>
+      <button type="button" class="seg-btn" data-pref="seuil" data-valeur="80">80 %</button>
+      <button type="button" class="seg-btn" data-pref="seuil" data-valeur="90">90 %</button>
+    </div>
+    <div class="donnees-aide">de son budget du mois.</div>
+    <label class="ligne-reglage" for="prefVibrations">
+      <span><b>Vibrations</b><small>Un petit retour tactile à chaque action</small></span>
+      <input type="checkbox" id="prefVibrations" class="interrupteur" role="switch">
+    </label>
+  </div>
+
   <div class="historique" id="blocSauvegarde">
-    <h2>Sauvegarde</h2>
+    <h2>Sauvegarde et données</h2>
     <div class="sous">Tes données sont enregistrées uniquement sur cet appareil. Si tu changes de téléphone ou effaces les données du navigateur, elles disparaissent.</div>
     <button type="button" class="btn-sauvegarde" id="btnExportJson">💾 Sauvegarder mes données</button>
     <div class="donnees-info" id="infoSauvegarde"></div>
@@ -216,9 +296,40 @@
       <button type="button" class="lien-discret" id="btnExportCsv">Exporter pour Excel (CSV)</button>
       <input type="file" id="inputImport" accept=".json,application/json" hidden>
     </div>
+    <div class="donnees-actions">
+      <button type="button" class="lien-discret" id="btnExportChiffre">🔒 Sauvegarde chiffrée (mot de passe)</button>
+    </div>
+    <div class="donnees-aide">La sauvegarde chiffrée est illisible sans son mot de passe : c'est le bon choix pour l'envoyer par WhatsApp ou e-mail.</div>
+    <div class="zone-secours" id="zoneSecours" hidden>
+      <div class="donnees-aide">Récupération</div>
+      <div class="donnees-actions">
+        <button type="button" class="lien-discret" id="btnRecupAvantImport" hidden>Revenir à l'état d'avant la dernière restauration</button>
+        <button type="button" class="lien-discret" id="btnRecupCorrompu" hidden>Télécharger la copie des données illisibles</button>
+      </div>
+    </div>
     <div class="zone-danger">
       <button type="button" class="btn-danger" id="btnReset">Supprimer toutes les dépenses</button>
     </div>
+  </div>
+
+  <div class="historique" id="blocVerrou">
+    <h2>Verrouillage</h2>
+    <div class="sous">Demande un code PIN à l'ouverture de l'application et après une minute d'absence. Cela protège contre un regard curieux, mais ne chiffre pas les données stockées sur l'appareil.</div>
+    <div class="donnees-info" id="infoVerrou"></div>
+    <div class="donnees-actions">
+      <button type="button" class="lien-discret" id="btnPinDefinir">Définir un code PIN</button>
+      <button type="button" class="lien-discret" id="btnPinRetirer" hidden>Désactiver le code</button>
+    </div>
+  </div>
+
+  <div class="historique" id="blocApplication">
+    <h2>Application</h2>
+    <div class="sous">Version <b id="versionApp"></b></div>
+    <div class="donnees-actions">
+      <button type="button" class="lien-discret" id="btnMajApp">Mettre à jour l'application</button>
+      <button type="button" class="lien-discret" id="btnResetPrefs">Réinitialiser les réglages</button>
+    </div>
+    <div class="donnees-aide">« Mettre à jour » recharge la dernière version de l'application. Tes données ne sont pas touchées.</div>
   </div>
   </div>
 
@@ -243,7 +354,7 @@
     </div>
     <div class="champ">
       <label for="inputNote">Note (optionnel)</label>
-      <input type="text" id="inputNote" placeholder="ex : taxi, marché...">
+      <input type="text" id="inputNote" maxlength="200" placeholder="ex : taxi, marché...">
     </div>
     <div class="modal-actions">
       <button class="btn-annuler" id="btnAnnuler">Annuler</button>
@@ -301,7 +412,7 @@
     </div>
     <div class="champ">
       <label for="inputEntreeNote">Source (optionnel)</label>
-      <input type="text" id="inputEntreeNote" placeholder="ex : salaire, vente...">
+      <input type="text" id="inputEntreeNote" maxlength="200" placeholder="ex : salaire, vente...">
     </div>
     <div class="modal-actions">
       <button class="btn-annuler" id="btnAnnulerEntree">Annuler</button>
@@ -324,7 +435,7 @@
     </div>
     <div class="champ">
       <label for="inputEpargneNote">Note (optionnel)</label>
-      <input type="text" id="inputEpargneNote" placeholder="ex : épargne du mois">
+      <input type="text" id="inputEpargneNote" maxlength="200" placeholder="ex : épargne du mois">
     </div>
     <div class="modal-actions">
       <button class="btn-annuler" id="btnAnnulerEpargne">Annuler</button>
@@ -339,7 +450,7 @@
     <div class="sub">Un nouveau poste de budget</div>
     <div class="champ">
       <label for="inputCatNom">Nom</label>
-      <input type="text" id="inputCatNom" placeholder="ex : Santé">
+      <input type="text" id="inputCatNom" maxlength="40" placeholder="ex : Santé">
     </div>
     <div class="champ">
       <label for="inputCatBudget">Budget (FCFA)</label>
@@ -358,7 +469,7 @@
     <div class="sub">La progression est calculée sur ton total épargné</div>
     <div class="champ">
       <label for="objNom">Nom (optionnel)</label>
-      <input type="text" id="objNom" placeholder="ex : Fonds d'urgence">
+      <input type="text" id="objNom" maxlength="40" placeholder="ex : Fonds d'urgence">
     </div>
     <div class="champ">
       <label for="objCible">Montant à atteindre (FCFA)</label>
@@ -397,7 +508,7 @@
     </div>
     <div class="champ">
       <label for="recNote">Note (optionnel)</label>
-      <input type="text" id="recNote" placeholder="ex : abonnement, loyer...">
+      <input type="text" id="recNote" maxlength="200" placeholder="ex : abonnement, loyer...">
     </div>
     <div class="modal-actions">
       <button class="btn-annuler" id="btnAnnulerRec">Annuler</button>
@@ -407,6 +518,43 @@
       <button type="button" id="btnSupprimerRec">Supprimer cette récurrence</button>
     </div>
   </div>
+</div>
+
+<div class="overlay" id="overlaySecret">
+  <div class="modal"><div class="sheet-grabber"></div>
+    <h3 id="secretTitre"></h3>
+    <div class="sub" id="secretSub"></div>
+    <div class="champ">
+      <label for="secretInput" id="secretLabel"></label>
+      <input type="password" id="secretInput" autocomplete="off">
+    </div>
+    <div class="champ" id="secretChamp2" hidden>
+      <label for="secretInput2">Confirme la saisie</label>
+      <input type="password" id="secretInput2" autocomplete="off">
+    </div>
+    <div class="erreur-champ" id="secretErreur" role="alert"></div>
+    <div class="modal-actions">
+      <button class="btn-annuler" id="btnAnnulerSecret" type="button">Annuler</button>
+      <button class="btn-valider" id="btnValiderSecret" type="button">Valider</button>
+    </div>
+  </div>
+</div>
+
+<div class="ecran-verrou" id="ecranVerrou" role="dialog" aria-modal="true" aria-labelledby="verrouTitre">
+  <div class="verrou-boite">
+    <div class="verrou-icone" aria-hidden="true">🔒</div>
+    <h2 id="verrouTitre">Mon Budget</h2>
+    <div class="sub">Entre ton code PIN</div>
+    <input type="password" id="verrouInput" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="Code PIN">
+    <div class="erreur-champ" id="verrouErreur" role="alert"></div>
+    <button type="button" class="btn-valider verrou-btn" id="btnDeverrouiller">Déverrouiller</button>
+    <button type="button" class="lien-discret" id="btnCodeOublie">Code oublié ?</button>
+  </div>
+</div>
+
+<div class="overlay-pres" id="overlayPresentation" role="dialog" aria-modal="true" aria-label="Présentation de Mon Budget">
+  <video id="presVideo" playsinline controls preload="none" poster="icons/icon-512.png"></video>
+  <button class="pres-fermer" type="button" data-pres="fermer" aria-label="Fermer la présentation">✕</button>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -420,9 +568,14 @@
 <script src="js/historique.js"></script>
 <script src="js/modals.js"></script>
 <script src="js/donnees.js"></script>
+<script src="js/securite.js"></script>
+<script src="js/reglages.js"></script>
 <script src="js/recurrentes.js"></script>
 <script src="js/objectif.js"></script>
 <script src="js/events.js"></script>
+<script src="js/courbe.js"></script>
+<script src="js/conseils.js"></script>
+<script src="js/accueil.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -57,13 +57,13 @@ function renderRecurrentes(){
     const cat = CATEGORIES.find(c=>c.id===r.cat);
     return `
       <div class="ligne-tx">
-        <span class="dot" style="background:${cat ? cat.couleur : 'var(--gris)'}"></span>
+        <span class="dot" style="background:${cat ? esc(cat.couleur) : 'var(--gris)'}"></span>
         <div>
-          <div>${cat ? cat.nom : 'Poste supprimé'}${r.note ? ' — '+r.note : ''}</div>
+          <div>${esc(cat ? cat.nom : 'Poste supprimé')}${r.note ? ' — ' + esc(r.note) : ''}</div>
           <div class="meta">le ${r.jour} de chaque mois</div>
         </div>
         <div class="montant">-${fmt(r.montant)} FCFA</div>
-        <div class="actions-ligne"><button class="edit" data-id="${r.id}" title="Modifier">✎</button></div>
+        <div class="actions-ligne"><button class="edit" data-id="${esc(r.id)}" title="Modifier">✎</button></div>
       </div>`;
   }).join('');
   corps.querySelectorAll('.edit').forEach(b=>{
@@ -103,7 +103,7 @@ async function validerRec(){
   const montant = parseFloat(document.getElementById('recMontant').value);
   const jour = parseInt(document.getElementById('recJour').value, 10);
   const note = document.getElementById('recNote').value.trim();
-  if(!cat || !montant || montant <= 0){ toast('Indique un montant valide', 'alerte'); return; }
+  if(!cat || !montantValide(montant)){ toast(MSG_MONTANT, 'alerte'); return; }
   if(!(jour >= 1 && jour <= 31)){ toast('Le jour doit être compris entre 1 et 31', 'alerte'); return; }
   if(recurrenteEnEdition){
     const r = recurrentes.find(x=>x.id===recurrenteEnEdition);

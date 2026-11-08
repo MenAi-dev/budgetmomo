@@ -11,6 +11,8 @@ function basculerPanneau(nom){
       p.classList.remove('actif');
     }
   });
+  // La courbe se dessine à la largeur réelle de l'écran : on la refait quand l'Aperçu redevient visible
+  if(nom==='apercu' && typeof rendreCourbeJours === 'function') rendreCourbeJours();
 }
 document.getElementById('nav').addEventListener('click', e=>{
   const btn = e.target.closest('.nav-btn');
@@ -24,12 +26,23 @@ async function init(){
   rendre();
   majInfoSauvegarde();
 }
-init();
+// L'écran de bienvenue joue une fois les données chargées (et même si le chargement échoue : il ne doit jamais bloquer).
+init().catch(e=>console.error('Démarrage', e)).finally(()=>{ if(typeof lancerAccueil === 'function') lancerAccueil(); });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js');
   });
+  // Quand une nouvelle version prend la main, on recharge la page une fois : on n'affiche jamais un mélange
+  // d'anciens et de nouveaux fichiers. (Pas au tout premier chargement : il n'y avait pas encore de service worker.)
+  if (navigator.serviceWorker.controller) {
+    let recharge = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (recharge) return;
+      recharge = true;
+      location.reload();
+    });
+  }
 }
 
 // Demande au navigateur de ne pas effacer les données automatiquement (sans effet visible si refusé).

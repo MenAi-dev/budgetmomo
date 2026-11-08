@@ -1,26 +1,40 @@
 const CLE_STOCKAGE = 'budgetData';
+const CLE_SECOURS_CORROMPU = 'budgetDataCorrompu'; // copie brute de données illisibles, pour ne jamais les perdre
+const CLE_AVANT_IMPORT = 'budgetAvantImport';      // état précédent, conservé avant une restauration
+
+// Applique un objet de données (déjà parsé) à l'état de l'application.
+// Les données lues dans le navigateur passent par les mêmes contrôles qu'une restauration (voir donnees.js) :
+// types, identifiants, couleurs, montants. Une valeur modifiée ou corrompue ne peut plus fausser les calculs ni l'affichage.
+function appliquerDonnees(data){
+  const cats = nettoyerCategories(data.categories);
+  if(cats.length) CATEGORIES = cats;
+  depenses = nettoyerMouvements(data.depenses, true, true).ok;
+  entrees = nettoyerMouvements(data.entrees, false, true).ok;
+  epargnes = nettoyerMouvements(data.epargnes, false, true).ok;
+  historiqueBudgets = nettoyerHistorique(data.historiqueBudgets);
+  recurrentes = nettoyerRecurrentes(data.recurrentes);
+  objectifEpargne = nettoyerObjectif(data.objectifEpargne);
+  dernierMoisVu = typeof data.dernierMoisVu === 'string' && RE_MOIS.test(data.dernierMoisVu) ? data.dernierMoisVu : null;
+}
 
 async function chargerTout(){
   // Stockage local au navigateur (persiste entre les rechargements de la page,
   // tant que tu utilises le même navigateur sur le même appareil).
-  try{
-    const brut = localStorage.getItem(CLE_STOCKAGE);
-    if(brut){
-      const data = JSON.parse(brut);
-      if(Array.isArray(data.categories) && data.categories.length) CATEGORIES = data.categories;
-      depenses = Array.isArray(data.depenses) ? data.depenses : [];
-      entrees = Array.isArray(data.entrees) ? data.entrees : [];
-      epargnes = Array.isArray(data.epargnes) ? data.epargnes : [];
-      historiqueBudgets = Array.isArray(data.historiqueBudgets) ? data.historiqueBudgets : [];
-      recurrentes = Array.isArray(data.recurrentes) ? data.recurrentes : [];
-      const o = data.objectifEpargne;
-      objectifEpargne = (o && typeof o.cible === 'number' && o.cible > 0 && /^\d{4}-\d{2}-\d{2}$/.test(o.date))
-        ? { nom: typeof o.nom === 'string' ? o.nom : '', cible: o.cible, date: o.date } : null;
-      dernierMoisVu = typeof data.dernierMoisVu === 'string' ? data.dernierMoisVu : null;
+  let brut = null;
+  try{ brut = localStorage.getItem(CLE_STOCKAGE); }catch(e){ console.error('Erreur de lecture des données', e); }
+  if(brut){
+    let data = null;
+    try{ data = JSON.parse(brut); }catch(e){ data = null; }
+    if(data && typeof data === 'object' && !Array.isArray(data)){
+      appliquerDonnees(data);
       prevRestantTotal = totalBudget();
       return;
     }
-  }catch(e){ console.error('Erreur de lecture des données', e); }
+    // Données illisibles : on en garde une copie brute AVANT de repartir à vide, pour qu'elles restent récupérables.
+    try{ localStorage.setItem(CLE_SECOURS_CORROMPU, brut); }catch(e){}
+    console.error('Données illisibles : copie conservée dans « ' + CLE_SECOURS_CORROMPU + ' »');
+    toast("Tes données enregistrées sont illisibles. Une copie de secours a été conservée ; l'application repart à vide.", 'danger');
+  }
 
   // Migration depuis un ancien format (clés séparées) si présent
   try{
@@ -45,15 +59,41 @@ async function chargerTout(){
     entrees = sauvEnt ? JSON.parse(sauvEnt) : [];
   }catch(e){ entrees = []; }
 
+  appliquerDonnees({ categories: CATEGORIES, depenses, entrees }); // même contrôle que les données récentes
   prevRestantTotal = totalBudget();
   await sauvegarderTout(); // consolide tout de suite pour les prochaines visites
 }
 
+let alerteStockageMontree = false;
+
+// Renvoie true si l'écriture a réussi. En cas d'échec (stockage plein, mode privé…), la personne est prévenue.
 async function sauvegarderTout(){
   try{
     localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ categories: CATEGORIES, depenses, entrees, epargnes, historiqueBudgets, recurrentes, objectifEpargne, dernierMoisVu }));
-  }catch(e){ console.error('Erreur de sauvegarde', e); }
+    alerteStockageMontree = false;
+    return true;
+  }catch(e){
+    console.error('Erreur de sauvegarde', e);
+    if(!alerteStockageMontree){
+      alerteStockageMontree = true;
+      toast("Impossible d'enregistrer : l'espace de stockage est plein ou bloqué. Fais une sauvegarde de tes données maintenant.", 'danger');
+    }
+    return false;
+  }
 }
+
+// Plusieurs onglets ouverts : quand un autre onglet enregistre, on recharge ses données
+// au lieu de les écraser à notre prochaine écriture.
+window.addEventListener('storage', e=>{
+  if(e.key !== CLE_STOCKAGE || !e.newValue) return;
+  try{
+    const data = JSON.parse(e.newValue);
+    if(!data || typeof data !== 'object' || Array.isArray(data)) return;
+    appliquerDonnees(data);
+    rendre();
+    toast('Données mises à jour depuis un autre onglet');
+  }catch(err){ console.error('Synchronisation entre onglets impossible', err); }
+});
 
 // Fige un instantané du budget courant (par poste) pour un mois donné.
 // methode: 'auto' (déclenché par le changement de mois) ou 'manuel' (bouton discret).

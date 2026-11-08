@@ -46,11 +46,11 @@ function renderObjectif(){
   zone.innerHTML = `
     <div class="objectif">
       <div class="objectif-head">
-        <div class="objectif-nom">${o.nom || 'Objectif d\'épargne'}<span class="objectif-date">avant le ${dateLibelle}</span></div>
+        <div class="objectif-nom">${esc(o.nom || 'Objectif d\'épargne')}<span class="objectif-date">avant le ${dateLibelle}</span></div>
         <button type="button" class="modif-btn" id="btnModifierObjectif" title="Modifier l'objectif">✎</button>
       </div>
       <div class="objectif-montants"><b>${fmt(total)}</b> / ${fmt(o.cible)} FCFA · ${Math.round(pct)} %</div>
-      <div class="barre"><div class="barre-fill" style="width:${pct}%; background:${total >= o.cible ? 'var(--vert)' : 'var(--bleu)'}"></div></div>
+      <div class="barre"><div class="barre-fill" style="width:${pct}%; background:${total >= o.cible ? 'var(--sain)' : 'var(--epargne)'}"></div></div>
       ${lignes}
     </div>`;
   document.getElementById('btnModifierObjectif').addEventListener('click', ()=>ouvrirModalObjectif());
@@ -71,10 +71,10 @@ function fermerModalObjectif(){
   document.getElementById('overlayObjectif').classList.remove('actif');
 }
 async function validerObjectif(){
-  const nom = document.getElementById('objNom').value.replace(/[<>]/g, '').trim().slice(0, 40);
+  const nom = document.getElementById('objNom').value.trim().slice(0, 40);
   const cible = parseFloat(document.getElementById('objCible').value);
   const date = document.getElementById('objDate').value;
-  if(!cible || cible <= 0){ toast('Indique un montant cible valide', 'alerte'); return; }
+  if(!montantValide(cible)){ toast(MSG_MONTANT, 'alerte'); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || date <= auj()){ toast("Choisis une date d'échéance à venir", 'alerte'); return; }
   objectifEpargne = { nom, cible, date };
   await sauvegarderTout();

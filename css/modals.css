@@ -62,3 +62,24 @@
   .pourcent-total.ok{color:var(--bleu-clair);}
   .pourcent-total.attention{color:var(--rouge);}
 
+  .erreur-champ{color:var(--rouge); font-size:0.8rem; min-height:1.1em; margin-top:2px;}
+  .zone-secours{margin-top:18px; padding-top:14px; border-top:1px solid var(--ligne);}
+
+  /* Verrouillage par code PIN : l'application entière est masquée tant que le code n'est pas saisi. */
+  .ecran-verrou{
+    position:fixed; inset:0; z-index:200; background:var(--noir);
+    display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  .verrouille .ecran-verrou{display:flex;}
+  .verrouille .wrap, .verrouille .overlay, .verrouille .toast{display:none !important;}
+  .verrou-boite{width:100%; max-width:300px; text-align:center;}
+  .verrou-icone{font-size:2.2rem; margin-bottom:8px;}
+  .verrou-boite h2{margin:0 0 4px; font-size:1.2rem;}
+  .verrou-boite .sub{color:var(--gris); font-size:0.85rem; margin-bottom:18px;}
+  .verrou-boite input{
+    width:100%; background:var(--noir-3); border:none; color:var(--blanc); text-align:center;
+    letter-spacing:0.5em; padding:14px; border-radius:var(--rayon-sm); font-size:1.3rem; font-family:inherit;
+  }
+  .verrou-boite input:focus{outline:2px solid var(--bleu); outline-offset:1px;}
+  .verrou-btn{width:100%; margin:14px 0 10px; padding:13px 0; border:none; border-radius:980px; font-size:0.95rem; font-weight:600; cursor:pointer;}
+

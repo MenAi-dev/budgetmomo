@@ -1,0 +1,141 @@
+/* ==========================================================================
+   Style Apple (iOS) — chargé en dernier, ACTIVÉ SEULEMENT si le style « Apple » est choisi dans les Réglages
+   (<link id="cssApple" disabled>, piloté par js/verrou-precoce.js puis js/reglages.js).
+   Il se pose par-dessus css/oneui.css : mêmes noms de variables, formes et contrôles d'iPhone.
+   Couleurs « adoucies » : noir légèrement relevé, texte blanc cassé, accents mêlés d'une pointe de gris.
+   ========================================================================== */
+
+:root{
+  --brut:#0A84FF;
+  --accent:color-mix(in oklab, var(--brut) 80%, #5c5c66);
+  --noir:#0C0C0F;             /* fond */
+  --noir-2:#18181C;           /* cartes */
+  --noir-3:#222227;           /* champs */
+  --blanc:#E8E8ED;            /* texte */
+  --gris:rgba(232,232,237,0.55);
+  --gris-2:rgba(232,232,237,0.75);
+  --ligne:rgba(84,84,88,0.55);
+  --piste:rgba(120,120,128,0.24);
+  --pouce:#55555C;            /* curseur des contrôles segmentés */
+  --panneau:24,24,28;         /* barre d'onglets et toasts (flou) */
+  --ombre:0 8px 24px rgba(0,0,0,0.35);
+  --sain:color-mix(in oklab, #30D158 76%, #5c5c66);
+  --vigilance:color-mix(in oklab, #FF9F0A 80%, #5c5c66);
+  --alerte:color-mix(in oklab, #FF453A 80%, #5c5c66);
+  --epargne:color-mix(in oklab, #BF5AF2 80%, #5c5c66);
+  --rayon:14px;
+  --rayon-sm:10px;
+}
+:root[data-theme="light"]{
+  --brut:#007AFF;
+  --accent:color-mix(in oklab, var(--brut) 88%, #8e8e96);
+  --noir:#F0F0F4;
+  --noir-2:#FBFBFD;
+  --noir-3:#E9E9EE;
+  --blanc:#1C1C1E;
+  --gris:rgba(60,60,67,0.62);
+  --gris-2:rgba(60,60,67,0.85);
+  --ligne:rgba(60,60,67,0.18);
+  --piste:rgba(120,120,128,0.14);
+  --pouce:#FFFFFF;
+  --panneau:249,249,251;
+  --ombre:0 8px 24px rgba(0,0,0,0.10);
+  --sain:color-mix(in oklab, #34C759 82%, #8e8e96);
+  --vigilance:color-mix(in oklab, #FF9500 85%, #8e8e96);
+  --alerte:color-mix(in oklab, #FF3B30 85%, #8e8e96);
+  --epargne:color-mix(in oklab, #AF52DE 85%, #8e8e96);
+}
+
+/* ---------- Page et en-tête : grand titre iOS ---------- */
+body{
+  font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing:-0.012em;
+  padding:calc(env(safe-area-inset-top, 0px) + 22px) 20px calc(110px + env(safe-area-inset-bottom, 0px));
+}
+header{margin:6px 0 26px; padding:0;}
+header h1{font-size:2.125rem; font-weight:700; letter-spacing:-0.025em;}
+header p{font-size:0.95rem; color:var(--gris);}
+
+/* ---------- Cartes groupées ---------- */
+.resume, .repartition, .entrees-section, .graphique-mois, .historique, .comparatif, .solde-card, .hero, .courbe-jours{border-radius:var(--rayon);}
+.carte{border-radius:var(--rayon); padding:18px;}
+.carte-ajout{border-radius:var(--rayon); border-width:1.5px;}
+.objectif, .histo-resume, .nav-mois{border-radius:12px;}
+.nav-mois button{border-radius:10px;}
+.resume{
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--etat) 14%, transparent) 0%, transparent 60%),
+    var(--noir-2);
+}
+.resume .resume-valeur{font-size:2.6rem;}
+.message-etat{border-radius:12px; font-weight:500;}
+.message-etat::before{box-shadow:none;}
+.barre-globale{height:8px;}
+.barre-globale-fill{box-shadow:none;}
+.barre{height:6px;}
+.message-epargne, .rappel-sauvegarde{border-radius:12px;}
+
+/* ---------- Barre d'onglets iOS (pleine largeur, en bas) ---------- */
+.nav{
+  left:0; right:0; transform:none; width:auto; bottom:0;
+  border:none; border-top:0.5px solid var(--ligne); border-radius:0; box-shadow:none;
+  background:rgba(var(--panneau), 0.86);
+  -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px);
+  padding:5px 0 calc(4px + env(safe-area-inset-bottom, 0px)); gap:0;
+}
+.nav-btn{min-height:50px; padding:4px 2px; gap:2px; border-radius:0; font-size:0.625rem; font-weight:500; color:var(--gris);}
+.nav-btn svg{width:26px; height:26px; stroke-width:1.7;}
+.nav-btn.actif{color:var(--accent);}
+.nav-btn.actif svg{stroke-width:2.1;}
+.nav-fond{display:none;}
+@media(min-width:700px){ .nav{width:auto;} }
+
+/* ---------- Boutons ---------- */
+.ajout-btn{border-radius:10px; padding:11px 0; margin-top:14px;}
+.ajout-entree-btn{border-radius:980px;}
+.btn-valider, .btn-sauvegarde{border-radius:12px;}
+.btn-sauvegarde{padding:14px;}
+.btn-danger{border-radius:12px;}
+.lien-discret{opacity:1;}
+.modif-btn, .suppr-btn{width:34px; height:34px;}
+.ajout-cat-btn{padding:5px 14px 5px 5px;}
+.ajout-cat-icone{width:26px; height:26px; font-size:1.2rem;}
+
+/* ---------- Feuilles iOS ---------- */
+.overlay{background:rgba(0,0,0,0.4);}
+.modal{border-radius:14px 14px 0 0; padding:8px 16px calc(24px + env(safe-area-inset-bottom, 0px));}
+@media(min-width:640px){ .modal{border-radius:14px; padding:20px;} }
+.sheet-grabber{width:36px; height:5px; background:var(--gris); opacity:.5;}
+.modal h3{font-size:1.25rem; font-weight:700; letter-spacing:-0.02em;}
+.champ input, .champ select, .filtres-histo input, .filtres-histo select, .verrou-boite input{border-radius:10px; padding:13px 14px;}
+.modal-actions button{border-radius:12px; padding:14px 0;}
+
+/* ---------- Toasts : panneau flouté, petite pastille de couleur ---------- */
+.toast{
+  border-radius:14px; padding:12px 16px; bottom:calc(76px + env(safe-area-inset-bottom, 0px));
+  background:rgba(var(--panneau), 0.92); color:var(--blanc);
+  box-shadow:var(--ombre), 0 0 0 0.5px var(--ligne);
+  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+}
+.toast::before{content:'' !important; width:8px; height:8px; background:var(--t);}
+.toast button{color:var(--accent); text-decoration:none; font-weight:600;}
+@media(min-width:700px){ .toast{bottom:calc(80px + env(safe-area-inset-bottom, 0px));} }
+
+/* ---------- Réglages : contrôles segmentés et interrupteurs iOS ---------- */
+.reglage-titre{font-size:0.8rem; font-weight:400; text-transform:uppercase; letter-spacing:0.02em; color:var(--gris); margin-left:4px;}
+.seg{gap:2px; padding:2px; border-radius:9px; background:var(--piste);}
+.seg-btn{min-height:34px; padding:7px 6px; border-radius:7px; font-size:0.85rem; color:var(--blanc);}
+.seg-btn[aria-pressed="true"]{background:var(--pouce); color:var(--blanc); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04);}
+.pastilles{border-radius:12px;}
+.interrupteur{width:51px; height:31px; background:var(--piste);}
+.interrupteur::after{top:2px; left:2px; width:27px; height:27px; background:#FFFFFF; box-shadow:0 3px 8px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.04); transition:transform .25s var(--spring);}
+.interrupteur:checked{background:var(--sain);}
+.interrupteur:checked::after{transform:translateX(20px); background:#FFFFFF;}
+
+/* Les pastilles montrent la couleur telle qu'elle sera appliquée (adoucie) */
+.pastille{background:color-mix(in oklab, var(--c) 80%, #5c5c66);}
+:root[data-theme="light"] .pastille{background:color-mix(in oklab, var(--c) 88%, #8e8e96);}
+.pastille[aria-pressed="true"]{box-shadow:0 0 0 3px var(--noir-3), 0 0 0 5px color-mix(in oklab, var(--c) 80%, #5c5c66);}
+
+/* Écran de bienvenue : logo à coins d'icône iOS */
+.sp-logo{border-radius:20px;}
